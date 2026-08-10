@@ -8,11 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --navy:#132a4c;
     --navy-2:#1c3d6b;
     --navy-deep:#0b1c34;
+    --gold:#c9a227;
     --red:#c1272d;
     --paper:#ffffff;
     --ink:#1f2937;
@@ -24,53 +27,26 @@
   }
 
   *{box-sizing:border-box;}
-  html{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
   body{
     margin:0;
     font-family:var(--font-body);
     background:var(--bg);
     color:var(--ink);
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
   }
 
-  .app{
-    max-width:1180px;
-    margin:0 auto;
-    padding:24px;
-  }
+  .app{ max-width:1180px; margin:0 auto; padding:24px; }
 
-  .app-header{
-    margin-bottom:18px;
-  }
+  .app-header{ margin-bottom:18px; }
   .app-header h1{
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:22px;
-    color:var(--navy-deep);
-    margin:0;
-    letter-spacing:.01em;
+    font-family:var(--font-display); font-weight:600; font-size:22px;
+    color:var(--navy-deep); margin:0; letter-spacing:.01em;
   }
-  .app-header p{
-    margin:2px 0 0;
-    color:var(--muted);
-    font-size:13px;
-  }
+  .app-header p{ margin:2px 0 0; color:var(--muted); font-size:13px; }
 
-  .toolbar{
-    display:flex;
-    gap:10px;
-    margin-bottom:18px;
-    flex-wrap:wrap;
-  }
+  .toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
   button{
-    font-family:var(--font-body);
-    font-size:13px;
-    border:none;
-    border-radius:6px;
-    padding:9px 16px;
-    cursor:pointer;
-    font-weight:600;
+    font-family:var(--font-body); font-size:13px; border:none; border-radius:6px;
+    padding:9px 16px; cursor:pointer; font-weight:600;
   }
   .btn-primary{background:var(--navy); color:#fff;}
   .btn-primary:hover{background:var(--navy-deep);}
@@ -79,98 +55,40 @@
   .btn-danger{background:#fff; color:var(--red); border:1px solid var(--red); padding:6px 10px; font-size:12px;}
   .btn-danger:hover{background:#fbebec;}
 
-  .panel{
-    background:#fff;
-    border-radius:10px;
-    padding:18px 20px;
-    margin-bottom:18px;
-    box-shadow:0 1px 3px rgba(0,0,0,.08);
-  }
+  .panel{ background:#fff; border-radius:10px; padding:18px 20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
   .panel h2{
-    font-family:var(--font-display);
-    font-size:15px;
-    font-weight:600;
-    text-transform:uppercase;
-    letter-spacing:.05em;
-    color:var(--navy);
-    margin:0 0 12px;
+    font-family:var(--font-display); font-size:15px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--navy); margin:0 0 12px;
   }
-  .panel .subnote{
-    font-size:12px;
-    color:var(--muted);
-    margin:-8px 0 14px;
-  }
+  .panel .subnote{ font-size:12px; color:var(--muted); margin:-8px 0 14px; }
 
-  .meta-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:12px;
-    align-items:end;
-  }
+  .meta-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:end; }
   .field label{
-    display:block;
-    font-size:11px;
-    color:var(--muted);
-    margin-bottom:4px;
-    text-transform:uppercase;
-    letter-spacing:.03em;
+    display:block; font-size:11px; color:var(--muted); margin-bottom:4px;
+    text-transform:uppercase; letter-spacing:.03em;
   }
   .field input, .field textarea, .field select{
-    width:100%;
-    padding:7px 9px;
-    border:1px solid var(--line);
-    border-radius:6px;
-    font-size:13px;
-    font-family:var(--font-body);
+    width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:6px;
+    font-size:13px; font-family:var(--font-body);
   }
-  .field.locked input{
-    background:#f3f4f6;
-    color:var(--muted);
-  }
-  .period-grid{
-    display:grid;
-    grid-template-columns:1fr 90px 1fr 90px;
-    gap:10px;
-    margin-top:12px;
-  }
+  .field.locked input{ background:#f3f4f6; color:var(--muted); }
+  .period-grid{ display:grid; grid-template-columns:1fr 90px 1fr 90px; gap:10px; margin-top:12px; }
 
-  .logo-uploader{
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
+  .logo-uploader{ display:flex; align-items:center; gap:12px; }
   .logo-preview{
-    width:52px;height:52px;border-radius:50%;
-    background:var(--navy);
-    display:flex;align-items:center;justify-content:center;
-    overflow:hidden;flex:0 0 52px;
+    width:52px;height:52px;border-radius:50%; background:var(--navy);
+    display:flex;align-items:center;justify-content:center; overflow:hidden;flex:0 0 52px;
     border:2px solid var(--navy-deep);
   }
   .logo-preview img{width:100%;height:100%;object-fit:contain;}
-  .logo-preview .fallback{
-    font-family:var(--font-display);
-    font-weight:700;color:#fff;font-size:16px;letter-spacing:.02em;
-  }
+  .logo-preview .fallback{ font-family:var(--font-display); font-weight:700;color:#fff;font-size:16px;letter-spacing:.02em; }
   .logo-uploader input[type=file]{font-size:12px;}
 
-  /* ---------- IMPORT PANEL ---------- */
-  .import-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-  }
-  .import-group{
-    border:1px dashed var(--line);
-    border-radius:8px;
-    padding:12px;
-  }
+  .import-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .import-group{ border:1px dashed var(--line); border-radius:8px; padding:12px; }
   .import-group h3{
-    margin:0 0 8px;
-    font-family:var(--font-display);
-    font-size:13px;
-    font-weight:600;
-    color:var(--navy-deep);
-    text-transform:uppercase;
+    margin:0 0 8px; font-family:var(--font-display); font-size:13px; font-weight:600;
+    color:var(--navy-deep); text-transform:uppercase;
   }
   .import-group input[type=file]{font-size:12px; width:100%;}
   .import-status{font-size:12px; color:var(--muted); margin-top:6px; min-height:16px;}
@@ -178,198 +96,72 @@
   .import-status.err{color:var(--red);}
   .import-help{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5;}
 
-  .row-card{
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:12px 14px;
-    margin-bottom:10px;
-    position:relative;
-  }
-  .row-card .row-top{
-    display:flex;
-    gap:10px;
-    align-items:flex-end;
-    margin-bottom:10px;
-    flex-wrap:wrap;
-  }
+  .row-card{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; position:relative; }
+  .row-card .row-top{ display:flex; gap:10px; align-items:flex-end; margin-bottom:10px; flex-wrap:wrap; }
   .row-top .field{flex:1; min-width:150px;}
   .row-top .field.small{flex:0 0 150px; min-width:150px;}
   .row-top .field.mode{flex:0 0 190px; min-width:190px;}
 
-  .matches{
-    display:grid;
-    grid-template-columns:1fr auto 1fr;
-    gap:10px;
-    align-items:end;
-  }
-  .match-block{
-    display:grid;
-    grid-template-columns:1.8fr .8fr 1fr 1.3fr;
-    gap:8px;
-    background:#f8f9fb;
-    padding:8px;
-    border-radius:6px;
-  }
-  .vs-label{
-    align-self:center;
-    font-size:12px;
-    color:var(--muted);
-    font-style:italic;
-    text-align:center;
-    padding-bottom:8px;
-  }
+  .matches{ display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:end; }
+  .match-block{ display:grid; grid-template-columns:2fr 1fr 1.3fr; gap:8px; background:#f8f9fb; padding:8px; border-radius:6px; }
+  .vs-label{ align-self:center; font-size:12px; color:var(--muted); font-style:italic; text-align:center; padding-bottom:8px; }
   .info-mode textarea{min-height:44px; resize:vertical;}
-  .stage-mode{
-    display:grid;
-    grid-template-columns:1fr 1fr 1.6fr;
-    gap:10px;
-    background:#f8f9fb;
-    padding:8px;
-    border-radius:6px;
-  }
+  .stage-mode{ display:grid; grid-template-columns:1fr 1fr 1.6fr; gap:10px; background:#f8f9fb; padding:8px; border-radius:6px; }
 
-  .row-actions{
-    position:absolute;
-    top:10px;
-    right:12px;
-  }
-
+  .row-actions{ position:absolute; top:10px; right:12px; }
   #addRowBtn{margin-top:4px;}
   .hidden{display:none !important;}
 
-  /* ---------- PREVIEW / EXPORT DOCUMENT ---------- */
-  .sheet-wrap{
-    background:#fff;
-    border-radius:12px;
-    box-shadow:0 1px 3px rgba(0,0,0,.08);
-    overflow:hidden;
-  }
-  #sheet{
-    position:relative;
-    padding:0 0 22px;
-  }
-
-  .watermark{
-    position:absolute;
-    inset:0;
-    z-index:0;
-    overflow:hidden;
-    pointer-events:none;
-  }
+  /* ---------- PREVIEW ---------- */
+  .sheet-wrap{ background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden; }
+  #sheet{ position:relative; padding:0 0 22px; }
+  .watermark{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
   .watermark span{
-    position:absolute;
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:13px;
-    letter-spacing:.25em;
-    color:var(--navy);
-    opacity:.05;
-    white-space:nowrap;
-    transform:rotate(-14deg);
+    position:absolute; font-family:var(--font-display); font-weight:600; font-size:13px;
+    letter-spacing:.25em; color:var(--navy); opacity:.05; white-space:nowrap; transform:rotate(-14deg);
   }
-
   .sheet-body{position:relative; z-index:1; padding:0 30px;}
 
   .masthead{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    background:var(--navy);
-    color:#fff;
-    padding:18px 26px;
-    margin-bottom:20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    background:var(--navy); color:#fff; padding:18px 26px; margin-bottom:20px;
+    border-bottom:4px solid var(--gold);
   }
   .club-block{display:flex; align-items:center; gap:14px;}
   .club-logo{
-    width:58px;height:58px;border-radius:50%;
-    background:#fff;
-    display:flex;align-items:center;justify-content:center;
-    overflow:hidden;flex:0 0 58px;
+    width:58px;height:58px;border-radius:50%; background:#fff;
+    display:flex;align-items:center;justify-content:center; overflow:hidden;flex:0 0 58px;
     border:2px solid rgba(255,255,255,.5);
   }
   .club-logo img{width:100%;height:100%;object-fit:contain;}
-  .club-logo .fallback{
-    font-family:var(--font-display);
-    font-weight:700;color:var(--navy);font-size:18px;
-  }
+  .club-logo .fallback{ font-family:var(--font-display); font-weight:700;color:var(--navy);font-size:18px; }
   .club-text .club-name{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:23px;
-    letter-spacing:.02em;
-    text-transform:uppercase;
-    line-height:1.1;
+    font-family:var(--font-display); font-weight:700; font-size:23px; letter-spacing:.02em;
+    text-transform:uppercase; line-height:1.1;
   }
   .club-text .club-cat{
-    font-size:12px;
-    font-weight:600;
-    opacity:.85;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    margin-top:2px;
+    font-size:12px; font-weight:600; opacity:.85; letter-spacing:.1em; text-transform:uppercase; margin-top:2px;
   }
-  .masthead-center{
-    text-align:center;
-    flex:1;
-  }
+  .masthead-center{ text-align:center; flex:1; }
   .masthead-center .title{
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:15px;
-    text-transform:uppercase;
-    letter-spacing:.08em;
+    font-family:var(--font-display); font-weight:600; font-size:15px;
+    text-transform:uppercase; letter-spacing:.08em;
   }
-  .masthead-center .period{
-    font-size:13px;
-    opacity:.85;
-    margin-top:2px;
-  }
+  .masthead-center .period{ font-size:13px; opacity:.85; margin-top:2px; }
   .month-badge{
-    width:78px;height:78px;border-radius:50%;
-    border:2px dashed rgba(255,255,255,.55);
+    width:78px;height:78px;border-radius:50%; border:2px dashed var(--gold);
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    transform:rotate(-6deg);
-    flex:0 0 78px;
-    text-align:center;
-    padding:4px;
+    transform:rotate(-6deg); flex:0 0 78px; text-align:center; padding:4px;
   }
-  .month-badge .m{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:13px;
-    letter-spacing:.02em;
-    text-transform:uppercase;
-    line-height:1.15;
-  }
-  .month-badge .y{
-    font-size:10px;
-    opacity:.8;
-    margin-top:2px;
-  }
+  .month-badge .m{ font-family:var(--font-display); font-weight:700; font-size:13px; letter-spacing:.02em; text-transform:uppercase; line-height:1.15; }
+  .month-badge .y{ font-size:10px; opacity:.8; margin-top:2px; }
 
-  table.plan{
-    width:100%;
-    border-collapse:collapse;
-    font-size:12.5px;
-  }
+  table.plan{ width:100%; border-collapse:collapse; font-size:12.5px; }
   table.plan th{
-    background:var(--navy);
-    color:#fff;
-    text-align:left;
-    padding:8px 10px;
-    border:1px solid var(--navy);
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:11.5px;
-    text-transform:uppercase;
-    letter-spacing:.03em;
+    background:var(--navy); color:#fff; text-align:left; padding:8px 10px; border:1px solid var(--navy);
+    font-family:var(--font-display); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;
   }
-  table.plan td{
-    border:1px solid var(--line);
-    padding:7px 10px;
-    vertical-align:middle;
-  }
+  table.plan td{ border:1px solid var(--line); padding:7px 10px; vertical-align:middle; }
   table.plan tbody tr:nth-child(even) td{background:#f6f8fb;}
   table.plan td.date-cell{white-space:nowrap; font-weight:600;}
   table.plan td.color-cell{width:8px; padding:0; border-right:none;}
@@ -377,79 +169,32 @@
   table.plan td.info-row{font-style:italic; color:var(--navy-deep); background:#fbfbfb !important;}
   .ou{color:var(--muted); font-style:italic; padding:0 4px;}
 
-  .bottom-grid{
-    display:grid;
-    grid-template-columns:1fr 1.6fr;
-    gap:16px;
-    margin-top:18px;
-  }
-  .legend-box, .notes-box{
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:12px 14px;
-  }
+  .bottom-grid{ display:grid; grid-template-columns:1fr 1.6fr; gap:16px; margin-top:18px; }
+  .legend-box, .notes-box{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
   .legend-box h3, .notes-box h3{
-    margin:0 0 8px;
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:11.5px;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-    color:var(--navy);
+    margin:0 0 8px; font-family:var(--font-display); font-weight:600; font-size:11.5px;
+    text-transform:uppercase; letter-spacing:.04em; color:var(--navy);
   }
-  .legend-item{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:12px;
-    margin-bottom:5px;
-  }
-  .legend-item .sw{
-    width:14px; height:14px; border-radius:3px; flex:0 0 14px;
-    border:1px solid rgba(0,0,0,.15);
-  }
-  .notes-box .notes-content{
-    font-size:12px;
-    white-space:pre-wrap;
-    min-height:60px;
-    color:var(--ink);
-  }
+  .legend-item{ display:flex; align-items:center; gap:8px; font-size:12px; margin-bottom:5px; }
+  .legend-item .sw{ width:14px; height:14px; border-radius:3px; flex:0 0 14px; border:1px solid rgba(0,0,0,.15); }
+  .notes-box .notes-content{ font-size:12px; white-space:pre-wrap; min-height:60px; color:var(--ink); }
   .notes-box textarea{
-    width:100%;
-    min-height:90px;
-    border:1px dashed var(--line);
-    border-radius:4px;
-    font-family:var(--font-body);
-    font-size:12px;
-    padding:6px;
+    width:100%; min-height:90px; border:1px dashed var(--line); border-radius:4px;
+    font-family:var(--font-body); font-size:12px; padding:6px;
   }
-  .footnote{
-    margin-top:14px;
-    font-size:10.5px;
-    color:var(--muted);
-    font-style:italic;
-    text-align:center;
-  }
-
-  @media print{
-    body{background:#fff;}
-    .app{max-width:none; padding:0;}
-    .no-print{display:none !important;}
-    .sheet-wrap{box-shadow:none; border-radius:0;}
-    @page{ size: A4 landscape; margin: 10mm; }
-  }
+  .footnote{ margin-top:14px; font-size:10.5px; color:var(--muted); font-style:italic; text-align:center; }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <div class="app-header no-print">
+  <div class="app-header">
     <h1>Générateur de planning mensuel — Limoges Football U13</h1>
     <p>Renseignez les rencontres, puis générez l'aperçu et exportez en PDF.</p>
   </div>
 
   <!-- ===== META ===== -->
-  <div class="panel no-print">
+  <div class="panel">
     <h2>En-tête du document</h2>
     <p class="subnote">Le club et la catégorie sont fixes (Limoges Football — U13). Le prévisionnel peut couvrir 2 mois.</p>
     <div class="meta-grid">
@@ -489,7 +234,7 @@
   </div>
 
   <!-- ===== IMPORT EXCEL ===== -->
-  <div class="panel no-print">
+  <div class="panel">
     <h2>Importer depuis Excel</h2>
     <div class="import-grid">
       <div class="import-group">
@@ -505,24 +250,24 @@
     </div>
     <button class="btn-primary" id="importMergeBtn" style="margin-top:12px;">Importer et ajouter les lignes</button>
     <div class="import-help">
-      Colonnes attendues (n'importe quel ordre) : <strong>Date · Adversaires · Type · Score / Résultat · Lieu · Heure</strong>.<br>
+      Colonnes extraites automatiquement (le reste — N°, Score/Résultat, Colonne1, Durée, Adresse — est ignoré) : <strong>Date · Adversaires · Type · Lieu · Heure</strong>.<br>
       Un seul groupe peut être importé. Quand les deux fichiers ont une rencontre à la même date, elles sont fusionnées sur une seule ligne (« ... ou ... »).
     </div>
   </div>
 
   <!-- ===== ROWS EDITOR ===== -->
-  <div class="panel no-print">
+  <div class="panel">
     <h2>Rencontres et événements</h2>
     <div id="rowsContainer"></div>
     <button class="btn-secondary" id="addRowBtn">+ Ajouter une ligne</button>
   </div>
 
-  <div class="toolbar no-print">
+  <div class="toolbar">
     <button class="btn-primary" id="generateBtn">Générer l'aperçu</button>
-    <button class="btn-secondary" id="exportBtn">Imprimer / Exporter en PDF</button>
+    <button class="btn-secondary" id="exportBtn">Exporter en PDF</button>
   </div>
 
-  <!-- ===== PREVIEW / EXPORT DOCUMENT ===== -->
+  <!-- ===== PREVIEW ===== -->
   <div class="sheet-wrap">
     <div id="sheet">
       <div class="watermark" id="watermarkLayer"></div>
@@ -571,8 +316,7 @@
           </div>
           <div class="notes-box">
             <h3>Informations du mois (galette, sorties, réunion...)</h3>
-            <textarea id="notesInput" class="no-print" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
-            <div class="notes-content hidden" id="notesOutput"></div>
+            <textarea id="notesInput" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
           </div>
         </div>
 
@@ -597,6 +341,11 @@ const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','ao�
 const MOIS_ABBR = ['JANV','FÉVR','MARS','AVR','MAI','JUIN','JUIL','AOÛT','SEPT','OCT','NOV','DÉC'];
 const JOURS_FR = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
 
+function stripAccents(s){
+  return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+}
+const MOIS_STRIPPED = MOIS_FR.map(stripAccents);
+
 function formatDateFR(iso){
   if(!iso) return '';
   const parts = iso.split('-');
@@ -614,16 +363,22 @@ function formatHeureFR(t){
   return mm === 0 ? `${hh}h` : `${hh}h${String(mm).padStart(2,'0')}`;
 }
 
-// ---------- Mois de début / fin ----------
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+}
+
 const selDebut = document.getElementById('moisDebut');
 const selFin = document.getElementById('moisFin');
 MOIS_FR.forEach((m, i) => {
-  selDebut.innerHTML += `<option value="${i}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`;
-  selFin.innerHTML += `<option value="${i}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`;
+  const opt = `<option value="${i}">${m.charAt(0).toUpperCase()+m.slice(1)}</option>`;
+  selDebut.innerHTML += opt;
+  selFin.innerHTML += opt;
 });
 selDebut.value = 8; // septembre
 selFin.value = 9;   // octobre
 
+let logoDataUrl = null;
 let rowCount = 0;
 const rowsContainer = document.getElementById('rowsContainer');
 
@@ -663,14 +418,12 @@ function addRow(prefill){
       <div class="matches">
         <div class="match-block">
           <div class="field"><label>Équipe / adversaire 1</label><input class="f-eq1" placeholder="Aixe 1 / Aurence 1"></div>
-          <div class="field"><label>Score</label><input class="f-s1" placeholder="3-1"></div>
           <div class="field"><label>Heure 1</label><input type="time" class="f-h1"></div>
           <div class="field"><label>Lieu 1</label><input class="f-l1" placeholder="St Lazare"></div>
         </div>
         <div class="vs-label">ou</div>
         <div class="match-block">
           <div class="field"><label>Équipe / adversaire 2 (optionnel)</label><input class="f-eq2" placeholder="Bessines"></div>
-          <div class="field"><label>Score</label><input class="f-s2" placeholder="2-2"></div>
           <div class="field"><label>Heure 2</label><input type="time" class="f-h2"></div>
           <div class="field"><label>Lieu 2</label><input class="f-l2" placeholder="Bessines"></div>
         </div>
@@ -697,11 +450,9 @@ function addRow(prefill){
     wrap.querySelector('.f-date').value = prefill.date || '';
     wrap.querySelector('.f-mode').value = prefill.mode || 'match';
     wrap.querySelector('.f-eq1').value = prefill.eq1 || '';
-    wrap.querySelector('.f-s1').value = prefill.s1 || '';
     wrap.querySelector('.f-h1').value = prefill.h1 || '';
     wrap.querySelector('.f-l1').value = prefill.l1 || '';
     wrap.querySelector('.f-eq2').value = prefill.eq2 || '';
-    wrap.querySelector('.f-s2').value = prefill.s2 || '';
     wrap.querySelector('.f-h2').value = prefill.h2 || '';
     wrap.querySelector('.f-l2').value = prefill.l2 || '';
     wrap.querySelector('.f-info').value = prefill.info || '';
@@ -743,9 +494,9 @@ document.getElementById('logoInput').addEventListener('change', function(e){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = function(ev){
-    const dataUrl = ev.target.result;
-    document.getElementById('logoPreview').innerHTML = `<img src="${dataUrl}" alt="logo">`;
-    document.getElementById('outLogo').innerHTML = `<img src="${dataUrl}" alt="logo">`;
+    logoDataUrl = ev.target.result;
+    document.getElementById('logoPreview').innerHTML = `<img src="${logoDataUrl}" alt="logo">`;
+    document.getElementById('outLogo').innerHTML = `<img src="${logoDataUrl}" alt="logo">`;
   };
   reader.readAsDataURL(file);
 });
@@ -763,41 +514,32 @@ function buildWatermark(){
   }
 }
 
-function generate(){
+function computePeriode(){
   const md = Number(selDebut.value), ad = Number(document.getElementById('anneeDebut').value);
   const mf = Number(selFin.value), af = Number(document.getElementById('anneeFin').value);
   const nomDebut = MOIS_FR[md].charAt(0).toUpperCase()+MOIS_FR[md].slice(1);
   const nomFin = MOIS_FR[mf].charAt(0).toUpperCase()+MOIS_FR[mf].slice(1);
-  const periodeTxt = (md === mf && ad === af)
+  const texte = (md === mf && ad === af)
     ? `${nomDebut} ${ad}`
     : (ad === af ? `${nomDebut} - ${nomFin} ${ad}` : `${nomDebut} ${ad} - ${nomFin} ${af}`);
-  document.getElementById('outPeriode').innerText = periodeTxt;
-  document.getElementById('badgeMonth').innerText = (md === mf) ? MOIS_ABBR[md] : `${MOIS_ABBR[md]}–${MOIS_ABBR[mf]}`;
-  document.getElementById('badgeYear').innerText = (ad === af) ? String(ad) : `${ad}/${String(af).slice(2)}`;
+  const badgeMonth = (md === mf) ? MOIS_ABBR[md] : `${MOIS_ABBR[md]}–${MOIS_ABBR[mf]}`;
+  const badgeYear = (ad === af) ? String(ad) : `${ad}/${String(af).slice(2)}`;
+  return {texte, badgeMonth, badgeYear};
+}
 
-  const notes = document.getElementById('notesInput').value;
-  const notesOut = document.getElementById('notesOutput');
-  notesOut.innerText = notes;
-  notesOut.classList.remove('hidden');
-
-  const outRows = document.getElementById('outRows');
-  outRows.innerHTML = '';
-
+// Source unique de vérité pour les lignes : utilisée à la fois par l'aperçu HTML et l'export PDF
+function getRowsData(){
   const cards = rowsContainer.querySelectorAll('.row-card');
+  const data = [];
   cards.forEach(card => {
     const type = card.querySelector('.f-type').value;
-    const color = TYPE_COLORS[type].hex;
+    const colorHex = TYPE_COLORS[type].hex;
     const mode = card.querySelector('.f-mode').value;
-    const tr = document.createElement('tr');
 
     if(mode === 'info'){
       const date = card.querySelector('.f-date').value;
       const info = card.querySelector('.f-info').value;
-      tr.innerHTML = `
-        <td class="color-cell"><div style="background:${color}"></div></td>
-        <td class="date-cell">${esc(formatDateFR(date))}</td>
-        <td class="info-row" colspan="3">${esc(info)}</td>
-      `;
+      data.push({colorHex, isSpan:true, date: formatDateFR(date), text: info});
     } else if(mode === 'stage'){
       const debut = card.querySelector('.f-stage-debut').value;
       const fin = card.querySelector('.f-stage-fin').value;
@@ -806,39 +548,52 @@ function generate(){
       if(debut && fin) txt = `Stage du ${formatDateFR(debut)} au ${formatDateFR(fin)}`;
       else if(debut) txt = `Stage à partir du ${formatDateFR(debut)}`;
       if(note) txt += ` (${note})`;
-      tr.innerHTML = `
-        <td class="color-cell"><div style="background:${color}"></div></td>
-        <td class="date-cell"></td>
-        <td class="info-row" colspan="3">${esc(txt)}</td>
-      `;
+      data.push({colorHex, isSpan:true, date:'', text: txt});
     } else {
       const date = card.querySelector('.f-date').value;
-      const eq1 = card.querySelector('.f-eq1').value;
-      const s1 = card.querySelector('.f-s1').value;
-      const h1 = card.querySelector('.f-h1').value;
-      const l1 = card.querySelector('.f-l1').value;
-      const eq2 = card.querySelector('.f-eq2').value;
-      const s2 = card.querySelector('.f-s2').value;
-      const h2 = card.querySelector('.f-h2').value;
-      const l2 = card.querySelector('.f-l2').value;
+      data.push({
+        colorHex, isSpan:false, date: formatDateFR(date),
+        eq1: card.querySelector('.f-eq1').value,
+        h1: formatHeureFR(card.querySelector('.f-h1').value),
+        l1: card.querySelector('.f-l1').value,
+        eq2: card.querySelector('.f-eq2').value,
+        h2: formatHeureFR(card.querySelector('.f-h2').value),
+        l2: card.querySelector('.f-l2').value
+      });
+    }
+  });
+  return data;
+}
 
-      const eq1Txt = esc(eq1) + (s1 ? ` <strong>(${esc(s1)})</strong>` : '');
-      const eq2Txt = esc(eq2) + (s2 ? ` <strong>(${esc(s2)})</strong>` : '');
+function generate(){
+  const p = computePeriode();
+  document.getElementById('outPeriode').innerText = p.texte;
+  document.getElementById('badgeMonth').innerText = p.badgeMonth;
+  document.getElementById('badgeYear').innerText = p.badgeYear;
 
-      let eqCell, hCell, lCell;
-      if(eq2){
-        eqCell = `${eq1Txt}<span class="ou">ou</span>${eq2Txt}`;
-        hCell = `${esc(formatHeureFR(h1))}<span class="ou">/</span>${esc(formatHeureFR(h2))}`;
-        lCell = `${esc(l1)}<span class="ou">/</span>${esc(l2)}`;
-      } else {
-        eqCell = eq1Txt;
-        hCell = esc(formatHeureFR(h1));
-        lCell = esc(l1);
-      }
+  const outRows = document.getElementById('outRows');
+  outRows.innerHTML = '';
 
+  getRowsData().forEach(r => {
+    const tr = document.createElement('tr');
+    if(r.isSpan){
       tr.innerHTML = `
-        <td class="color-cell"><div style="background:${color}"></div></td>
-        <td class="date-cell">${esc(formatDateFR(date))}</td>
+        <td class="color-cell"><div style="background:${r.colorHex}"></div></td>
+        <td class="date-cell">${esc(r.date)}</td>
+        <td class="info-row" colspan="3">${esc(r.text)}</td>
+      `;
+    } else {
+      let eqCell, hCell, lCell;
+      if(r.eq2){
+        eqCell = `${esc(r.eq1)}<span class="ou">ou</span>${esc(r.eq2)}`;
+        hCell = `${esc(r.h1)}<span class="ou">/</span>${esc(r.h2)}`;
+        lCell = `${esc(r.l1)}<span class="ou">/</span>${esc(r.l2)}`;
+      } else {
+        eqCell = esc(r.eq1); hCell = esc(r.h1); lCell = esc(r.l1);
+      }
+      tr.innerHTML = `
+        <td class="color-cell"><div style="background:${r.colorHex}"></div></td>
+        <td class="date-cell">${esc(r.date)}</td>
         <td>${eqCell}</td>
         <td>${hCell}</td>
         <td>${lCell}</td>
@@ -849,11 +604,164 @@ function generate(){
 }
 
 document.getElementById('generateBtn').addEventListener('click', generate);
-document.getElementById('exportBtn').addEventListener('click', () => { generate(); window.print(); });
+
+// ---------- EXPORT PDF (jsPDF + autotable, généré programmatiquement — pas de capture d'écran) ----------
+function exportPDF(){
+  generate();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 12;
+  const navy = [19,42,76];
+  const gold = [201,162,39];
+  const p = computePeriode();
+
+  // Filigrane discret
+  try{
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({opacity:0.045}));
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(26);
+    doc.setTextColor(...navy);
+    for(let i=-1;i<4;i++){
+      doc.text('LIMOGES FOOTBALL U13', 40, 40 + i*45, {angle:20});
+      doc.text('LIMOGES FOOTBALL U13', 190, 55 + i*45, {angle:20});
+    }
+    doc.restoreGraphicsState();
+  } catch(e){ /* filigrane optionnel */ }
+
+  // Bandeau d'en-tête
+  doc.setFillColor(...navy);
+  doc.rect(0,0,pageW,25,'F');
+  doc.setFillColor(...gold);
+  doc.rect(0,25,pageW,1.4,'F');
+
+  let textX = marginX;
+  if(logoDataUrl){
+    try{
+      const fmt = logoDataUrl.split(';')[0].split('/')[1].toUpperCase().replace('JPG','JPEG');
+      doc.setFillColor(255,255,255);
+      doc.circle(marginX+8, 12, 8.5, 'F');
+      doc.addImage(logoDataUrl, fmt, marginX+1, 5, 14, 14);
+      textX = marginX + 20;
+    } catch(e){ /* logo optionnel */ }
+  }
+
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(17);
+  doc.text('LIMOGES FOOTBALL', textX, 11);
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica','normal');
+  doc.text('CATÉGORIE U13', textX, 17.5);
+
+  doc.setFontSize(13);
+  doc.setFont('helvetica','bold');
+  doc.text('PLANNING PRÉVISIONNEL', pageW/2, 10.5, {align:'center'});
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text(p.texte, pageW/2, 17, {align:'center'});
+
+  const bx = pageW - marginX - 12, by = 12.5;
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.6);
+  doc.circle(bx, by, 10.5, 'D');
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','bold');
+  doc.text(p.badgeMonth, bx, by-1, {align:'center'});
+  doc.setFontSize(7);
+  doc.setFont('helvetica','normal');
+  doc.text(p.badgeYear, bx, by+4, {align:'center'});
+
+  // Table
+  const rowsData = getRowsData();
+  const body = rowsData.map(r => {
+    if(r.isSpan){
+      return [
+        {content:'', styles:{fillColor: hexToRgb(r.colorHex)}},
+        r.date,
+        {content:r.text, colSpan:3, styles:{fontStyle:'italic', textColor:[11,28,52]}}
+      ];
+    }
+    const equipe = r.eq2 ? `${r.eq1}   ou   ${r.eq2}` : r.eq1;
+    const heure = r.eq2 ? `${r.h1} / ${r.h2}` : r.h1;
+    const lieu = r.eq2 ? `${r.l1} / ${r.l2}` : r.l1;
+    return [
+      {content:'', styles:{fillColor: hexToRgb(r.colorHex)}},
+      r.date, equipe, heure, lieu
+    ];
+  });
+
+  doc.autoTable({
+    startY: 31,
+    margin:{left:marginX, right:marginX},
+    head:[['', 'Date', 'Équipe(s)', 'Heure', 'Lieu']],
+    body: body,
+    theme:'grid',
+    styles:{font:'helvetica', fontSize:9, cellPadding:2.3, lineColor:[221,225,231], lineWidth:.15, textColor:[31,41,55]},
+    headStyles:{fillColor:navy, textColor:255, fontStyle:'bold', halign:'left', fontSize:8.5},
+    columnStyles:{
+      0:{cellWidth:3},
+      1:{cellWidth:36, fontStyle:'bold'},
+      2:{cellWidth:'auto'},
+      3:{cellWidth:26},
+      4:{cellWidth:50}
+    },
+    alternateRowStyles:{fillColor:[246,248,251]}
+  });
+
+  let y = doc.lastAutoTable.finalY + 8;
+  if(y > pageH - 55) y = pageH - 55;
+
+  const legendW = 85, boxH = 42;
+  doc.setDrawColor(...[221,225,231]);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(marginX, y, legendW, boxH, 2, 2, 'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...navy);
+  doc.text('LÉGENDE', marginX+4, y+7);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(31,41,55);
+  const legendItems = [
+    ['Entraînement', hexToRgb(TYPE_COLORS.entrainement.hex)],
+    ['Amical', hexToRgb(TYPE_COLORS.amical.hex)],
+    ['Stage', hexToRgb(TYPE_COLORS.stage.hex)],
+    ['Championnat ou coupe', hexToRgb(TYPE_COLORS.champ.hex)],
+    ['Tournoi', hexToRgb(TYPE_COLORS.tournoi.hex)],
+    ['Autre', hexToRgb(TYPE_COLORS.autre.hex)]
+  ];
+  legendItems.forEach((item,i) => {
+    const iy = y + 13 + i*5;
+    doc.setFillColor(...item[1]);
+    doc.rect(marginX+4, iy-3.2, 4, 4, 'F');
+    doc.text(item[0], marginX+11, iy);
+  });
+
+  const notesX = marginX + legendW + 8;
+  const notesW = pageW - marginX - notesX;
+  doc.roundedRect(notesX, y, notesW, boxH, 2, 2, 'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...navy);
+  doc.text('INFORMATIONS DU MOIS', notesX+4, y+7);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(31,41,55);
+  const notesTxt = document.getElementById('notesInput').value || '';
+  const wrapped = doc.splitTextToSize(notesTxt, notesW-8);
+  doc.text(wrapped, notesX+4, y+14);
+
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(107,114,128);
+  doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
+
+  const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
+  doc.save(`Planning_U13_${slug}.pdf`);
+}
+
+document.getElementById('exportBtn').addEventListener('click', exportPDF);
 
 // ---------- IMPORT EXCEL ----------
-function stripAccents(s){
-  return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+function findHeaderRowIndex(rows){
+  for(let i=0; i<Math.min(10, rows.length); i++){
+    const norm = (rows[i] || []).map(c => stripAccents(c));
+    if(norm.some(c => c === 'date')) return i;
+  }
+  return 0;
 }
 
 function findColIndex(headerRow, candidates){
@@ -876,26 +784,43 @@ function normalizeType(raw){
   return 'autre';
 }
 
+function parseFrenchDateText(txt){
+  const t = stripAccents(txt);
+  const m = t.match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/);
+  if(!m) return null;
+  const day = parseInt(m[1],10);
+  const monthTxt = m[2];
+  const year = parseInt(m[3],10);
+  const idx = MOIS_STRIPPED.findIndex(mo => monthTxt.startsWith(mo.slice(0,4)));
+  if(idx === -1) return null;
+  return `${year}-${String(idx+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
 function cellToIsoDate(rawValue){
   if(rawValue instanceof Date && !isNaN(rawValue)){
     return rawValue.getFullYear() + '-' + String(rawValue.getMonth()+1).padStart(2,'0') + '-' + String(rawValue.getDate()).padStart(2,'0');
   }
   const txt = (rawValue || '').toString().trim();
-  const m = txt.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-  if(m){
-    let [, d, mo, y] = m;
+  if(!txt) return '';
+  const mNum = txt.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(mNum){
+    let [, d, mo, y] = mNum;
     if(y.length === 2) y = '20' + y;
     return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
-  return txt; // fallback : laissé tel quel, à corriger manuellement
+  const fr = parseFrenchDateText(txt);
+  if(fr) return fr;
+  return '';
 }
 
 function cellToTimeValue(rawValue){
   if(rawValue instanceof Date && !isNaN(rawValue)){
-    return String(rawValue.getHours()).padStart(2,'0') + ':' + String(rawValue.getMinutes()).padStart(2,'0');
+    const hh = rawValue.getHours(), mm = rawValue.getMinutes();
+    if(hh === 0 && mm === 0) return '';
+    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
   }
   const txt = (rawValue || '').toString().trim();
-  const m = txt.match(/(\d{1,2})[h:](\d{2})?/);
+  const m = txt.match(/^(\d{1,2})\s*[h:]\s*(\d{2})?$/i);
   if(m){
     const h = String(parseInt(m[1],10)).padStart(2,'0');
     const mm = m[2] ? m[2] : '00';
@@ -913,26 +838,27 @@ function parseWorkbookFile(file){
         const wb = XLSX.read(data, {type:'array', cellDates:true});
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:''});
-        if(rows.length < 2){ resolve([]); return; }
-        const header = rows[0];
+        const headerIdx = findHeaderRowIndex(rows);
+        const header = rows[headerIdx] || [];
         const idxDate = findColIndex(header, ['date']);
-        const idxAdv = findColIndex(header, ['adversaires','adversaire','equipe','equipes']);
+        const idxAdv = findColIndex(header, ['adversaires','adversaire']);
         const idxType = findColIndex(header, ['type']);
-        const idxScore = findColIndex(header, ['score / resultat','score/resultat','score resultat','score','resultat']);
         const idxLieu = findColIndex(header, ['lieu']);
         const idxHeure = findColIndex(header, ['heure']);
 
         const records = [];
-        for(let i=1; i<rows.length; i++){
+        for(let i=headerIdx+1; i<rows.length; i++){
           const r = rows[i];
           if(!r || r.every(c => c === '' || c === undefined || c === null)) continue;
+          const typeRaw = idxType !== -1 ? (r[idxType] || '').toString().trim() : '';
+          const advRaw = idxAdv !== -1 ? (r[idxAdv] || '').toString().trim() : '';
+          if(!typeRaw && !advRaw) continue; // ligne séparateur / vacances, sans donnée utile
           const iso = idxDate !== -1 ? cellToIsoDate(r[idxDate]) : '';
           if(!iso) continue;
           records.push({
             dateIso: iso,
-            adversaires: idxAdv !== -1 ? (r[idxAdv] || '').toString().trim() : '',
-            type: idxType !== -1 ? normalizeType(r[idxType]) : 'autre',
-            score: idxScore !== -1 ? (r[idxScore] || '').toString().trim() : '',
+            adversaires: advRaw,
+            type: normalizeType(typeRaw),
             lieu: idxLieu !== -1 ? (r[idxLieu] || '').toString().trim() : '',
             heure: idxHeure !== -1 ? cellToTimeValue(r[idxHeure]) : ''
           });
@@ -992,11 +918,9 @@ async function handleImportMerge(){
       date: key,
       mode: 'match',
       eq1: first ? first.adversaires : '',
-      s1: first ? first.score : '',
       h1: first ? first.heure : '',
       l1: first ? first.lieu : '',
       eq2: second ? second.adversaires : '',
-      s2: second ? second.score : '',
       h2: second ? second.heure : '',
       l2: second ? second.lieu : ''
     });
