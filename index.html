@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning mensuel - Générateur</title>
+<style>
+  :root{
+    --navy:#1c3d6b;
+    --navy-dark:#122a4a;
+    --red:#c1272d;
+    --paper:#ffffff;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --line:#d1d5db;
+    --bg:#eef1f5;
+
+    --c-entrainement:#a9c6e8;
+    --c-amical:#f2b47a;
+    --c-stage:#a9d8ae;
+    --c-champ:#c9a3d4;
+    --c-tournoi:#f2d24a;
+    --c-autre:#b9bdc4;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+
+  .app{
+    max-width:1200px;
+    margin:0 auto;
+    padding:24px;
+  }
+
+  .app-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .app-header h1{
+    font-size:20px;
+    color:var(--navy-dark);
+    margin:0;
+  }
+  .app-header p{
+    margin:2px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:inherit;
+    font-size:13px;
+    border:none;
+    border-radius:6px;
+    padding:9px 16px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-secondary{background:#fff; color:var(--navy); border:1px solid var(--navy);}
+  .btn-secondary:hover{background:#e8edf5;}
+  .btn-danger{background:#fff; color:var(--red); border:1px solid var(--red); padding:6px 10px; font-size:12px;}
+  .btn-danger:hover{background:#fbebec;}
+  .btn-ghost{background:transparent; color:var(--navy); text-decoration:underline; padding:4px 6px; font-size:12px;}
+
+  .panel{
+    background:#fff;
+    border-radius:10px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+  }
+  .panel h2{
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--navy);
+    margin:0 0 12px;
+  }
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  .field label{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:4px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    padding:7px 9px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:13px;
+    font-family:inherit;
+  }
+
+  .row-card{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    position:relative;
+  }
+  .row-card .row-top{
+    display:flex;
+    gap:10px;
+    align-items:flex-end;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .row-top .field{flex:1; min-width:150px;}
+  .row-top .field.small{flex:0 0 130px; min-width:130px;}
+  .row-top .field.mode{flex:0 0 170px; min-width:170px;}
+
+  .swatch{
+    width:20px; height:20px; border-radius:4px; flex:0 0 20px;
+    align-self:center;
+    border:1px solid rgba(0,0,0,.15);
+  }
+
+  .matches{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:10px;
+    align-items:end;
+  }
+  .match-block{
+    display:grid;
+    grid-template-columns:2fr 1fr 1.4fr;
+    gap:8px;
+    background:#f8f9fb;
+    padding:8px;
+    border-radius:6px;
+  }
+  .vs-label{
+    align-self:center;
+    font-size:12px;
+    color:var(--muted);
+    font-style:italic;
+    text-align:center;
+    padding-bottom:8px;
+  }
+  .info-block textarea{min-height:44px; resize:vertical;}
+
+  .row-actions{
+    position:absolute;
+    top:10px;
+    right:12px;
+  }
+
+  #addRowBtn{margin-top:4px;}
+
+  /* ---------- PREVIEW / PRINT DOCUMENT ---------- */
+  .sheet-wrap{
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    padding:26px 30px;
+  }
+
+  .sheet-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:2px solid var(--navy);
+    padding-bottom:10px;
+    margin-bottom:14px;
+  }
+  .sheet-header .club-name{
+    font-size:18px;
+    font-weight:700;
+    color:var(--navy-dark);
+  }
+  .sheet-header .period{
+    font-size:14px;
+    color:var(--muted);
+  }
+  .sheet-title{
+    text-align:center;
+    background:var(--navy);
+    color:#fff;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.03em;
+    padding:6px;
+    border-radius:4px;
+    margin-bottom:10px;
+    text-transform:uppercase;
+  }
+
+  table.plan{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12.5px;
+  }
+  table.plan th{
+    background:#f1f4f9;
+    color:var(--navy-dark);
+    text-align:left;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+  }
+  table.plan td{
+    border:1px solid var(--line);
+    padding:6px 8px;
+    vertical-align:middle;
+  }
+  table.plan td.date-cell{white-space:nowrap; font-weight:600;}
+  table.plan td.color-cell{width:8px; padding:0; border-right:none;}
+  table.plan tr td.color-cell div{width:100%; height:100%; min-height:26px;}
+  table.plan td.info-row{font-style:italic; color:var(--navy-dark); background:#fbfbfb;}
+  .ou{color:var(--muted); font-style:italic; padding:0 4px;}
+
+  .bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1.6fr;
+    gap:16px;
+    margin-top:18px;
+  }
+  .legend-box, .notes-box{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 12px;
+  }
+  .legend-box h3, .notes-box h3{
+    margin:0 0 8px;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--navy);
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    margin-bottom:5px;
+  }
+  .legend-item .sw{
+    width:14px; height:14px; border-radius:3px; flex:0 0 14px;
+    border:1px solid rgba(0,0,0,.15);
+  }
+  .notes-box .notes-content{
+    font-size:12px;
+    white-space:pre-wrap;
+    min-height:80px;
+    color:var(--ink);
+  }
+  .notes-box textarea{
+    width:100%;
+    min-height:90px;
+    border:1px dashed var(--line);
+    border-radius:4px;
+    font-family:inherit;
+    font-size:12px;
+    padding:6px;
+  }
+  .footnote{
+    margin-top:10px;
+    font-size:10.5px;
+    color:var(--muted);
+    font-style:italic;
+    text-align:center;
+  }
+
+  .hidden{display:none !important;}
+
+  @media print{
+    body{background:#fff;}
+    .app{max-width:none; padding:0;}
+    .no-print{display:none !important;}
+    .sheet-wrap{box-shadow:none; padding:0; border-radius:0;}
+    .panel{display:none;}
+    @page{ size: A4 landscape; margin: 12mm; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header no-print">
+    <div>
+      <h1>Générateur de planning mensuel</h1>
+      <p>Renseignez les rencontres, puis générez et imprimez / exportez en PDF.</p>
+    </div>
+  </div>
+
+  <!-- ===== META ===== -->
+  <div class="panel no-print">
+    <h2>En-tête du document</h2>
+    <div class="meta-grid">
+      <div class="field">
+        <label>Nom du club</label>
+        <input id="metaClub" value="Limoges Foot">
+      </div>
+      <div class="field">
+        <label>Catégorie</label>
+        <input id="metaCategorie" value="U13">
+      </div>
+      <div class="field">
+        <label>Période (ex : Septembre - Octobre 2026)</label>
+        <input id="metaPeriode" value="">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROWS EDITOR ===== -->
+  <div class="panel no-print">
+    <h2>Rencontres et événements</h2>
+    <div id="rowsContainer"></div>
+    <button class="btn-secondary" id="addRowBtn">+ Ajouter une ligne</button>
+  </div>
+
+  <div class="toolbar no-print">
+    <button class="btn-primary" id="generateBtn">Générer l'aperçu</button>
+    <button class="btn-secondary" id="printBtn">Imprimer / Exporter en PDF</button>
+  </div>
+
+  <!-- ===== PREVIEW / PRINTABLE DOCUMENT ===== -->
+  <div class="sheet-wrap" id="sheet">
+    <div class="sheet-header">
+      <div class="club-name" id="outClub">Limoges Foot</div>
+      <div class="period" id="outPeriode">Période</div>
+    </div>
+    <div class="sheet-title">Planning prévisionnel — <span id="outCategorie">U13</span></div>
+
+    <table class="plan">
+      <thead>
+        <tr>
+          <th style="width:6px;border-right:none;"></th>
+          <th style="width:15%;">Date</th>
+          <th style="width:39%;">Équipe(s)</th>
+          <th style="width:14%;">Heure</th>
+          <th style="width:26%;">Lieu</th>
+        </tr>
+      </thead>
+      <tbody id="outRows">
+        <!-- generated rows -->
+      </tbody>
+    </table>
+
+    <div class="bottom-grid">
+      <div class="legend-box">
+        <h3>Légende</h3>
+        <div class="legend-item"><span class="sw" style="background:var(--c-entrainement)"></span>Entraînement</div>
+        <div class="legend-item"><span class="sw" style="background:var(--c-amical)"></span>Amical</div>
+        <div class="legend-item"><span class="sw" style="background:var(--c-stage)"></span>Stage</div>
+        <div class="legend-item"><span class="sw" style="background:var(--c-champ)"></span>Championnat ou coupe</div>
+        <div class="legend-item"><span class="sw" style="background:var(--c-tournoi)"></span>Tournoi</div>
+        <div class="legend-item"><span class="sw" style="background:var(--c-autre)"></span>Autre</div>
+      </div>
+      <div class="notes-box">
+        <h3>Informations du mois (galette, sorties, réunion...)</h3>
+        <textarea id="notesInput" class="no-print" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
+        <div class="notes-content hidden" id="notesOutput"></div>
+      </div>
+    </div>
+
+    <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
+  </div>
+
+</div>
+
+<script>
+const TYPE_COLORS = {
+  entrainement: {label:"Entraînement", css:"var(--c-entrainement)"},
+  amical: {label:"Amical", css:"var(--c-amical)"},
+  stage: {label:"Stage", css:"var(--c-stage)"},
+  champ: {label:"Championnat ou coupe", css:"var(--c-champ)"},
+  tournoi: {label:"Tournoi", css:"var(--c-tournoi)"},
+  autre: {label:"Autre", css:"var(--c-autre)"}
+};
+
+let rowCount = 0;
+const rowsContainer = document.getElementById('rowsContainer');
+
+function addRow(prefill){
+  rowCount++;
+  const id = 'row_' + rowCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'row-card';
+  wrap.id = id;
+
+  wrap.innerHTML = `
+    <div class="row-actions">
+      <button class="btn-danger" onclick="document.getElementById('${id}').remove()">Supprimer</button>
+    </div>
+    <div class="row-top">
+      <div class="field small">
+        <label>Type</label>
+        <select class="f-type">
+          ${Object.entries(TYPE_COLORS).map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field small">
+        <label>Date</label>
+        <input class="f-date" placeholder="samedi 10 janvier 2026">
+      </div>
+      <div class="field mode">
+        <label>Nature de la ligne</label>
+        <select class="f-mode" onchange="toggleMode('${id}')">
+          <option value="match">Rencontre(s)</option>
+          <option value="info">Information (stage, note...)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="match-mode">
+      <div class="matches">
+        <div class="match-block">
+          <div class="field"><label>Équipe / adversaire 1</label><input class="f-eq1" placeholder="Aixe 1 / Aurence 1"></div>
+          <div class="field"><label>Heure 1</label><input class="f-h1" placeholder="10h30"></div>
+          <div class="field"><label>Lieu 1</label><input class="f-l1" placeholder="St Lazare"></div>
+        </div>
+        <div class="vs-label">ou</div>
+        <div class="match-block">
+          <div class="field"><label>Équipe / adversaire 2 (optionnel)</label><input class="f-eq2" placeholder="Bessines"></div>
+          <div class="field"><label>Heure 2</label><input class="f-h2" placeholder="14h00"></div>
+          <div class="field"><label>Lieu 2</label><input class="f-l2" placeholder="Bessines"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-mode hidden">
+      <div class="field">
+        <label>Texte de la ligne</label>
+        <textarea class="f-info" placeholder="Ex : Stage de vacances du 16 au 21 février (samedi inclus)"></textarea>
+      </div>
+    </div>
+  `;
+  rowsContainer.appendChild(wrap);
+
+  if(prefill){
+    wrap.querySelector('.f-type').value = prefill.type || 'entrainement';
+    wrap.querySelector('.f-date').value = prefill.date || '';
+    wrap.querySelector('.f-mode').value = prefill.mode || 'match';
+    wrap.querySelector('.f-eq1').value = prefill.eq1 || '';
+    wrap.querySelector('.f-h1').value = prefill.h1 || '';
+    wrap.querySelector('.f-l1').value = prefill.l1 || '';
+    wrap.querySelector('.f-eq2').value = prefill.eq2 || '';
+    wrap.querySelector('.f-h2').value = prefill.h2 || '';
+    wrap.querySelector('.f-l2').value = prefill.l2 || '';
+    wrap.querySelector('.f-info').value = prefill.info || '';
+    toggleMode(id);
+  }
+}
+
+function toggleMode(id){
+  const wrap = document.getElementById(id);
+  const mode = wrap.querySelector('.f-mode').value;
+  wrap.querySelector('.match-mode').classList.toggle('hidden', mode !== 'match');
+  wrap.querySelector('.info-mode').classList.toggle('hidden', mode !== 'info');
+}
+
+document.getElementById('addRowBtn').addEventListener('click', () => addRow());
+
+function esc(s){
+  const d = document.createElement('div');
+  d.innerText = s || '';
+  return d.innerHTML;
+}
+
+function generate(){
+  document.getElementById('outClub').innerText = document.getElementById('metaClub').value || 'Club';
+  document.getElementById('outCategorie').innerText = document.getElementById('metaCategorie').value || '';
+  document.getElementById('outPeriode').innerText = document.getElementById('metaPeriode').value || '';
+
+  const notes = document.getElementById('notesInput').value;
+  const notesOut = document.getElementById('notesOutput');
+  notesOut.innerText = notes;
+  notesOut.classList.remove('hidden');
+
+  const outRows = document.getElementById('outRows');
+  outRows.innerHTML = '';
+
+  const cards = rowsContainer.querySelectorAll('.row-card');
+  cards.forEach(card => {
+    const type = card.querySelector('.f-type').value;
+    const color = TYPE_COLORS[type].css;
+    const date = card.querySelector('.f-date').value;
+    const mode = card.querySelector('.f-mode').value;
+
+    const tr = document.createElement('tr');
+
+    if(mode === 'info'){
+      const info = card.querySelector('.f-info').value;
+      tr.innerHTML = `
+        <td class="color-cell"><div style="background:${color}"></div></td>
+        <td class="date-cell">${esc(date)}</td>
+        <td class="info-row" colspan="3">${esc(info)}</td>
+      `;
+    } else {
+      const eq1 = card.querySelector('.f-eq1').value;
+      const h1 = card.querySelector('.f-h1').value;
+      const l1 = card.querySelector('.f-l1').value;
+      const eq2 = card.querySelector('.f-eq2').value;
+      const h2 = card.querySelector('.f-h2').value;
+      const l2 = card.querySelector('.f-l2').value;
+
+      let eqCell, hCell, lCell;
+      if(eq2){
+        eqCell = `${esc(eq1)}<span class="ou">ou</span>${esc(eq2)}`;
+        hCell = `${esc(h1)}<span class="ou">/</span>${esc(h2)}`;
+        lCell = `${esc(l1)}<span class="ou">/</span>${esc(l2)}`;
+      } else {
+        eqCell = esc(eq1);
+        hCell = esc(h1);
+        lCell = esc(l1);
+      }
+
+      tr.innerHTML = `
+        <td class="color-cell"><div style="background:${color}"></div></td>
+        <td class="date-cell">${esc(date)}</td>
+        <td>${eqCell}</td>
+        <td>${hCell}</td>
+        <td>${lCell}</td>
+      `;
+    }
+    outRows.appendChild(tr);
+  });
+}
+
+document.getElementById('generateBtn').addEventListener('click', generate);
+document.getElementById('printBtn').addEventListener('click', () => { generate(); window.print(); });
+
+// Pré-remplissage avec quelques lignes d'exemple au premier chargement
+addRow({type:'champ', date:'samedi 12 septembre 2026', mode:'match', eq1:'Aixe 1 / Aurence 1', h1:'10h', l1:'St Lazare', eq2:'', h2:'', l2:''});
+addRow({type:'entrainement', date:'mardi 15 septembre 2026', mode:'match', eq1:'Entraînement collectif', h1:'18h', l1:'Beaublanc', eq2:'', h2:'', l2:''});
+addRow({type:'stage', date:'samedi 19 septembre 2026', mode:'info', info:'Stage de vacances du 19 au 24 septembre (samedi inclus)'});
+generate();
+</script>
+</body>
+</html>
