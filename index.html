@@ -3,50 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planning mensuel - Générateur</title>
+<title>Planning mensuel — Limoges Football U13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
-    --navy:#1c3d6b;
-    --navy-dark:#122a4a;
+    --navy:#132a4c;
+    --navy-2:#1c3d6b;
+    --navy-deep:#0b1c34;
     --red:#c1272d;
     --paper:#ffffff;
     --ink:#1f2937;
     --muted:#6b7280;
-    --line:#d1d5db;
+    --line:#dde1e7;
     --bg:#eef1f5;
-
-    --c-entrainement:#a9c6e8;
-    --c-amical:#f2b47a;
-    --c-stage:#a9d8ae;
-    --c-champ:#c9a3d4;
-    --c-tournoi:#f2d24a;
-    --c-autre:#b9bdc4;
+    --font-display:'Barlow Condensed', sans-serif;
+    --font-body:'Barlow', 'Segoe UI', Arial, sans-serif;
   }
 
   *{box-sizing:border-box;}
   body{
     margin:0;
-    font-family:'Segoe UI', Arial, sans-serif;
+    font-family:var(--font-body);
     background:var(--bg);
     color:var(--ink);
   }
 
   .app{
-    max-width:1200px;
+    max-width:1180px;
     margin:0 auto;
     padding:24px;
   }
 
   .app-header{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
     margin-bottom:18px;
   }
   .app-header h1{
-    font-size:20px;
-    color:var(--navy-dark);
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:22px;
+    color:var(--navy-deep);
     margin:0;
+    letter-spacing:.01em;
   }
   .app-header p{
     margin:2px 0 0;
@@ -61,7 +61,7 @@
     flex-wrap:wrap;
   }
   button{
-    font-family:inherit;
+    font-family:var(--font-body);
     font-size:13px;
     border:none;
     border-radius:6px;
@@ -70,12 +70,11 @@
     font-weight:600;
   }
   .btn-primary{background:var(--navy); color:#fff;}
-  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-primary:hover{background:var(--navy-deep);}
   .btn-secondary{background:#fff; color:var(--navy); border:1px solid var(--navy);}
   .btn-secondary:hover{background:#e8edf5;}
   .btn-danger{background:#fff; color:var(--red); border:1px solid var(--red); padding:6px 10px; font-size:12px;}
   .btn-danger:hover{background:#fbebec;}
-  .btn-ghost{background:transparent; color:var(--navy); text-decoration:underline; padding:4px 6px; font-size:12px;}
 
   .panel{
     background:#fff;
@@ -85,17 +84,25 @@
     box-shadow:0 1px 3px rgba(0,0,0,.08);
   }
   .panel h2{
-    font-size:14px;
+    font-family:var(--font-display);
+    font-size:15px;
+    font-weight:600;
     text-transform:uppercase;
-    letter-spacing:.04em;
+    letter-spacing:.05em;
     color:var(--navy);
     margin:0 0 12px;
+  }
+  .panel .subnote{
+    font-size:12px;
+    color:var(--muted);
+    margin:-8px 0 14px;
   }
 
   .meta-grid{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(4,1fr);
     gap:12px;
+    align-items:end;
   }
   .field label{
     display:block;
@@ -111,8 +118,31 @@
     border:1px solid var(--line);
     border-radius:6px;
     font-size:13px;
-    font-family:inherit;
+    font-family:var(--font-body);
   }
+  .field.locked input{
+    background:#f3f4f6;
+    color:var(--muted);
+  }
+
+  .logo-uploader{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo-preview{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--navy);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;flex:0 0 52px;
+    border:2px solid var(--navy-deep);
+  }
+  .logo-preview img{width:100%;height:100%;object-fit:contain;}
+  .logo-preview .fallback{
+    font-family:var(--font-display);
+    font-weight:700;color:#fff;font-size:16px;letter-spacing:.02em;
+  }
+  .logo-uploader input[type=file]{font-size:12px;}
 
   .row-card{
     border:1px solid var(--line);
@@ -131,12 +161,6 @@
   .row-top .field{flex:1; min-width:150px;}
   .row-top .field.small{flex:0 0 130px; min-width:130px;}
   .row-top .field.mode{flex:0 0 170px; min-width:170px;}
-
-  .swatch{
-    width:20px; height:20px; border-radius:4px; flex:0 0 20px;
-    align-self:center;
-    border:1px solid rgba(0,0,0,.15);
-  }
 
   .matches{
     display:grid;
@@ -169,43 +193,116 @@
   }
 
   #addRowBtn{margin-top:4px;}
+  .hidden{display:none !important;}
 
-  /* ---------- PREVIEW / PRINT DOCUMENT ---------- */
+  /* ---------- PREVIEW / EXPORT DOCUMENT ---------- */
   .sheet-wrap{
     background:#fff;
-    border-radius:10px;
+    border-radius:12px;
     box-shadow:0 1px 3px rgba(0,0,0,.08);
-    padding:26px 30px;
+    overflow:hidden;
+  }
+  #sheet{
+    position:relative;
+    padding:0 0 22px;
   }
 
-  .sheet-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border-bottom:2px solid var(--navy);
-    padding-bottom:10px;
-    margin-bottom:14px;
+  /* watermark signature */
+  .watermark{
+    position:absolute;
+    inset:0;
+    z-index:0;
+    overflow:hidden;
+    pointer-events:none;
   }
-  .sheet-header .club-name{
-    font-size:18px;
-    font-weight:700;
-    color:var(--navy-dark);
-  }
-  .sheet-header .period{
-    font-size:14px;
-    color:var(--muted);
-  }
-  .sheet-title{
-    text-align:center;
-    background:var(--navy);
-    color:#fff;
-    font-weight:700;
+  .watermark span{
+    position:absolute;
+    font-family:var(--font-display);
+    font-weight:600;
     font-size:13px;
-    letter-spacing:.03em;
-    padding:6px;
-    border-radius:4px;
-    margin-bottom:10px;
+    letter-spacing:.25em;
+    color:var(--navy);
+    opacity:.035;
+    white-space:nowrap;
+    transform:rotate(-14deg);
+  }
+
+  .sheet-body{position:relative; z-index:1; padding:0 30px;}
+
+  .masthead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    background:linear-gradient(120deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:#fff;
+    padding:18px 26px;
+    margin-bottom:20px;
+  }
+  .club-block{display:flex; align-items:center; gap:14px;}
+  .club-logo{
+    width:58px;height:58px;border-radius:50%;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;flex:0 0 58px;
+    border:2px solid rgba(255,255,255,.5);
+  }
+  .club-logo img{width:100%;height:100%;object-fit:contain;}
+  .club-logo .fallback{
+    font-family:var(--font-display);
+    font-weight:700;color:var(--navy);font-size:18px;
+  }
+  .club-text .club-name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:23px;
+    letter-spacing:.02em;
     text-transform:uppercase;
+    line-height:1.1;
+  }
+  .club-text .club-cat{
+    font-size:12px;
+    font-weight:600;
+    opacity:.85;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .masthead-center{
+    text-align:center;
+    flex:1;
+  }
+  .masthead-center .title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .masthead-center .period{
+    font-size:13px;
+    opacity:.85;
+    margin-top:2px;
+  }
+  .month-badge{
+    width:74px;height:74px;border-radius:50%;
+    border:2px dashed rgba(255,255,255,.55);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transform:rotate(-6deg);
+    flex:0 0 74px;
+  }
+  .month-badge .m{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    line-height:1;
+  }
+  .month-badge .y{
+    font-size:10.5px;
+    opacity:.8;
+    margin-top:2px;
   }
 
   table.plan{
@@ -214,24 +311,27 @@
     font-size:12.5px;
   }
   table.plan th{
-    background:#f1f4f9;
-    color:var(--navy-dark);
+    background:var(--navy);
+    color:#fff;
     text-align:left;
-    padding:6px 8px;
-    border:1px solid var(--line);
-    font-size:11px;
+    padding:8px 10px;
+    border:1px solid var(--navy);
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:11.5px;
     text-transform:uppercase;
-    letter-spacing:.02em;
+    letter-spacing:.03em;
   }
   table.plan td{
     border:1px solid var(--line);
-    padding:6px 8px;
+    padding:7px 10px;
     vertical-align:middle;
   }
+  table.plan tbody tr:nth-child(even) td{background:#f6f8fb;}
   table.plan td.date-cell{white-space:nowrap; font-weight:600;}
   table.plan td.color-cell{width:8px; padding:0; border-right:none;}
-  table.plan tr td.color-cell div{width:100%; height:100%; min-height:26px;}
-  table.plan td.info-row{font-style:italic; color:var(--navy-dark); background:#fbfbfb;}
+  table.plan tr td.color-cell div{width:100%; height:100%; min-height:28px;}
+  table.plan td.info-row{font-style:italic; color:var(--navy-deep); background:#fbfbfb !important;}
   .ou{color:var(--muted); font-style:italic; padding:0 4px;}
 
   .bottom-grid{
@@ -242,14 +342,16 @@
   }
   .legend-box, .notes-box{
     border:1px solid var(--line);
-    border-radius:6px;
-    padding:10px 12px;
+    border-radius:8px;
+    padding:12px 14px;
   }
   .legend-box h3, .notes-box h3{
     margin:0 0 8px;
-    font-size:11px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:11.5px;
     text-transform:uppercase;
-    letter-spacing:.03em;
+    letter-spacing:.04em;
     color:var(--navy);
   }
   .legend-item{
@@ -266,7 +368,7 @@
   .notes-box .notes-content{
     font-size:12px;
     white-space:pre-wrap;
-    min-height:80px;
+    min-height:60px;
     color:var(--ink);
   }
   .notes-box textarea{
@@ -274,55 +376,59 @@
     min-height:90px;
     border:1px dashed var(--line);
     border-radius:4px;
-    font-family:inherit;
+    font-family:var(--font-body);
     font-size:12px;
     padding:6px;
   }
   .footnote{
-    margin-top:10px;
+    margin-top:14px;
     font-size:10.5px;
     color:var(--muted);
     font-style:italic;
     text-align:center;
   }
 
-  .hidden{display:none !important;}
-
-  @media print{
-    body{background:#fff;}
-    .app{max-width:none; padding:0;}
-    .no-print{display:none !important;}
-    .sheet-wrap{box-shadow:none; padding:0; border-radius:0;}
-    .panel{display:none;}
-    @page{ size: A4 landscape; margin: 12mm; }
-  }
+  .no-print.hide-for-export{display:none !important;}
 </style>
 </head>
 <body>
 <div class="app">
 
   <div class="app-header no-print">
-    <div>
-      <h1>Générateur de planning mensuel</h1>
-      <p>Renseignez les rencontres, puis générez et imprimez / exportez en PDF.</p>
-    </div>
+    <h1>Générateur de planning mensuel — Limoges Football U13</h1>
+    <p>Renseignez les rencontres, puis générez l'aperçu et exportez en PDF.</p>
   </div>
 
   <!-- ===== META ===== -->
   <div class="panel no-print">
     <h2>En-tête du document</h2>
+    <p class="subnote">Le club et la catégorie sont fixes (Limoges Football — U13). Seuls la période et le libellé du mois se modifient.</p>
     <div class="meta-grid">
-      <div class="field">
-        <label>Nom du club</label>
-        <input id="metaClub" value="Limoges Foot">
+      <div class="field locked">
+        <label>Club</label>
+        <input value="Limoges Football" disabled>
       </div>
-      <div class="field">
+      <div class="field locked">
         <label>Catégorie</label>
-        <input id="metaCategorie" value="U13">
+        <input value="U13" disabled>
       </div>
       <div class="field">
-        <label>Période (ex : Septembre - Octobre 2026)</label>
+        <label>Période affichée (ex : Septembre - Octobre 2026)</label>
         <input id="metaPeriode" value="">
+      </div>
+      <div class="field">
+        <label>Libellé du tampon mois (ex : SEPT / 2026)</label>
+        <div style="display:flex; gap:6px;">
+          <input id="metaBadgeMonth" value="SEPT" style="flex:1;">
+          <input id="metaBadgeYear" value="2026" style="flex:1;">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;">Logo du club</label>
+      <div class="logo-uploader">
+        <div class="logo-preview" id="logoPreview"><span class="fallback">LF</span></div>
+        <input type="file" id="logoInput" accept="image/*">
       </div>
     </div>
   </div>
@@ -336,62 +442,78 @@
 
   <div class="toolbar no-print">
     <button class="btn-primary" id="generateBtn">Générer l'aperçu</button>
-    <button class="btn-secondary" id="printBtn">Imprimer / Exporter en PDF</button>
+    <button class="btn-secondary" id="exportBtn">Exporter en PDF</button>
   </div>
 
-  <!-- ===== PREVIEW / PRINTABLE DOCUMENT ===== -->
-  <div class="sheet-wrap" id="sheet">
-    <div class="sheet-header">
-      <div class="club-name" id="outClub">Limoges Foot</div>
-      <div class="period" id="outPeriode">Période</div>
-    </div>
-    <div class="sheet-title">Planning prévisionnel — <span id="outCategorie">U13</span></div>
+  <!-- ===== PREVIEW / EXPORT DOCUMENT ===== -->
+  <div class="sheet-wrap">
+    <div id="sheet">
+      <div class="watermark" id="watermarkLayer"></div>
 
-    <table class="plan">
-      <thead>
-        <tr>
-          <th style="width:6px;border-right:none;"></th>
-          <th style="width:15%;">Date</th>
-          <th style="width:39%;">Équipe(s)</th>
-          <th style="width:14%;">Heure</th>
-          <th style="width:26%;">Lieu</th>
-        </tr>
-      </thead>
-      <tbody id="outRows">
-        <!-- generated rows -->
-      </tbody>
-    </table>
-
-    <div class="bottom-grid">
-      <div class="legend-box">
-        <h3>Légende</h3>
-        <div class="legend-item"><span class="sw" style="background:var(--c-entrainement)"></span>Entraînement</div>
-        <div class="legend-item"><span class="sw" style="background:var(--c-amical)"></span>Amical</div>
-        <div class="legend-item"><span class="sw" style="background:var(--c-stage)"></span>Stage</div>
-        <div class="legend-item"><span class="sw" style="background:var(--c-champ)"></span>Championnat ou coupe</div>
-        <div class="legend-item"><span class="sw" style="background:var(--c-tournoi)"></span>Tournoi</div>
-        <div class="legend-item"><span class="sw" style="background:var(--c-autre)"></span>Autre</div>
+      <div class="masthead">
+        <div class="club-block">
+          <div class="club-logo" id="outLogo"><span class="fallback">LF</span></div>
+          <div class="club-text">
+            <div class="club-name">Limoges Football</div>
+            <div class="club-cat">Catégorie U13</div>
+          </div>
+        </div>
+        <div class="masthead-center">
+          <div class="title">Planning prévisionnel</div>
+          <div class="period" id="outPeriode">Période</div>
+        </div>
+        <div class="month-badge">
+          <div class="m" id="badgeMonth">SEPT</div>
+          <div class="y" id="badgeYear">2026</div>
+        </div>
       </div>
-      <div class="notes-box">
-        <h3>Informations du mois (galette, sorties, réunion...)</h3>
-        <textarea id="notesInput" class="no-print" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
-        <div class="notes-content hidden" id="notesOutput"></div>
+
+      <div class="sheet-body">
+        <table class="plan">
+          <thead>
+            <tr>
+              <th style="width:6px;border-right:none;"></th>
+              <th style="width:15%;">Date</th>
+              <th style="width:39%;">Équipe(s)</th>
+              <th style="width:14%;">Heure</th>
+              <th style="width:26%;">Lieu</th>
+            </tr>
+          </thead>
+          <tbody id="outRows"></tbody>
+        </table>
+
+        <div class="bottom-grid">
+          <div class="legend-box">
+            <h3>Légende</h3>
+            <div class="legend-item"><span class="sw" style="background:#a9c6e8"></span>Entraînement</div>
+            <div class="legend-item"><span class="sw" style="background:#f2b47a"></span>Amical</div>
+            <div class="legend-item"><span class="sw" style="background:#a9d8ae"></span>Stage</div>
+            <div class="legend-item"><span class="sw" style="background:#c9a3d4"></span>Championnat ou coupe</div>
+            <div class="legend-item"><span class="sw" style="background:#f2d24a"></span>Tournoi</div>
+            <div class="legend-item"><span class="sw" style="background:#b9bdc4"></span>Autre</div>
+          </div>
+          <div class="notes-box">
+            <h3>Informations du mois (galette, sorties, réunion...)</h3>
+            <textarea id="notesInput" class="no-print" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
+            <div class="notes-content hidden" id="notesOutput"></div>
+          </div>
+        </div>
+
+        <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
       </div>
     </div>
-
-    <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
   </div>
 
 </div>
 
 <script>
 const TYPE_COLORS = {
-  entrainement: {label:"Entraînement", css:"var(--c-entrainement)"},
-  amical: {label:"Amical", css:"var(--c-amical)"},
-  stage: {label:"Stage", css:"var(--c-stage)"},
-  champ: {label:"Championnat ou coupe", css:"var(--c-champ)"},
-  tournoi: {label:"Tournoi", css:"var(--c-tournoi)"},
-  autre: {label:"Autre", css:"var(--c-autre)"}
+  entrainement: {label:"Entraînement", hex:"#a9c6e8"},
+  amical: {label:"Amical", hex:"#f2b47a"},
+  stage: {label:"Stage", hex:"#a9d8ae"},
+  champ: {label:"Championnat ou coupe", hex:"#c9a3d4"},
+  tournoi: {label:"Tournoi", hex:"#f2d24a"},
+  autre: {label:"Autre", hex:"#b9bdc4"}
 };
 
 let rowCount = 0;
@@ -483,10 +605,37 @@ function esc(s){
   return d.innerHTML;
 }
 
+// Logo upload -> embedded as data URL, applied to both editor preview and export masthead
+document.getElementById('logoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const dataUrl = ev.target.result;
+    document.getElementById('logoPreview').innerHTML = `<img src="${dataUrl}" alt="logo">`;
+    document.getElementById('outLogo').innerHTML = `<img src="${dataUrl}" alt="logo">`;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Subtle repeating watermark, built once
+function buildWatermark(){
+  const layer = document.getElementById('watermarkLayer');
+  layer.innerHTML = '';
+  const text = 'LIMOGES FOOTBALL U13 • ';
+  for(let row = 0; row < 6; row++){
+    const span = document.createElement('span');
+    span.textContent = (text + text + text);
+    span.style.top = (row * 140 - 40) + 'px';
+    span.style.left = (row % 2 === 0 ? '-120px' : '-260px');
+    layer.appendChild(span);
+  }
+}
+
 function generate(){
-  document.getElementById('outClub').innerText = document.getElementById('metaClub').value || 'Club';
-  document.getElementById('outCategorie').innerText = document.getElementById('metaCategorie').value || '';
   document.getElementById('outPeriode').innerText = document.getElementById('metaPeriode').value || '';
+  document.getElementById('badgeMonth').innerText = document.getElementById('metaBadgeMonth').value || '';
+  document.getElementById('badgeYear').innerText = document.getElementById('metaBadgeYear').value || '';
 
   const notes = document.getElementById('notesInput').value;
   const notesOut = document.getElementById('notesOutput');
@@ -499,7 +648,7 @@ function generate(){
   const cards = rowsContainer.querySelectorAll('.row-card');
   cards.forEach(card => {
     const type = card.querySelector('.f-type').value;
-    const color = TYPE_COLORS[type].css;
+    const color = TYPE_COLORS[type].hex;
     const date = card.querySelector('.f-date').value;
     const mode = card.querySelector('.f-mode').value;
 
@@ -544,12 +693,37 @@ function generate(){
 }
 
 document.getElementById('generateBtn').addEventListener('click', generate);
-document.getElementById('printBtn').addEventListener('click', () => { generate(); window.print(); });
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  generate();
+  const sheet = document.getElementById('sheet');
+  const notesInput = document.getElementById('notesInput');
+  notesInput.classList.add('hide-for-export');
+
+  const periode = (document.getElementById('metaPeriode').value || 'planning').trim();
+  const filename = 'Planning_U13_' + periode.replace(/[^a-zA-Z0-9]+/g, '_') + '.pdf';
+
+  const opt = {
+    margin: 8,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  };
+
+  html2pdf().set(opt).from(sheet).save().then(() => {
+    notesInput.classList.remove('hide-for-export');
+  }).catch(() => {
+    notesInput.classList.remove('hide-for-export');
+  });
+});
 
 // Pré-remplissage avec quelques lignes d'exemple au premier chargement
+buildWatermark();
 addRow({type:'champ', date:'samedi 12 septembre 2026', mode:'match', eq1:'Aixe 1 / Aurence 1', h1:'10h', l1:'St Lazare', eq2:'', h2:'', l2:''});
 addRow({type:'entrainement', date:'mardi 15 septembre 2026', mode:'match', eq1:'Entraînement collectif', h1:'18h', l1:'Beaublanc', eq2:'', h2:'', l2:''});
 addRow({type:'stage', date:'samedi 19 septembre 2026', mode:'info', info:'Stage de vacances du 19 au 24 septembre (samedi inclus)'});
+document.getElementById('metaPeriode').value = 'Septembre 2026';
 generate();
 </script>
 </body>
