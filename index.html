@@ -254,6 +254,7 @@
     <h2>Rencontres et événements</h2>
     <div id="rowsContainer"></div>
     <button class="btn-secondary" id="addRowBtn">+ Ajouter une ligne</button>
+    <button class="btn-danger" id="clearAllBtn" style="padding:9px 16px; font-size:13px;">Tout supprimer</button>
   </div>
 
   <div class="toolbar">
@@ -317,12 +318,12 @@
             <div class="legend-item"><span class="sw" style="background:#b9bdc4"></span>Autre</div>
           </div>
           <div class="notes-box">
-            <h3>Informations du mois (galette, sorties, réunion...)</h3>
+            <h3>Informations du mois (sorties, réunion...)</h3>
             <textarea id="notesInput" placeholder="Ex : Galette des rois le 14/01 après l'entraînement — Réunion parents le 21/01 à 18h30 — Sortie patinoire le 4/02..."></textarea>
           </div>
         </div>
 
-        <div class="footnote">Ce calendrier est communiqué à titre indicatif et informatif, il peut donc être soumis à modification.</div>
+        <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
       </div>
     </div>
   </div>
@@ -530,6 +531,13 @@ function toggleMode(id){
 }
 
 document.getElementById('addRowBtn').addEventListener('click', () => addRow());
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  if(rowsContainer.children.length === 0) return;
+  if(confirm('Supprimer toutes les lignes du planning ? Cette action est irréversible.')){
+    rowsContainer.innerHTML = '';
+    generate();
+  }
+});
 
 function esc(s){
   const d = document.createElement('div');
@@ -833,7 +841,7 @@ function exportPDF(){
   doc.text(wrapped, notesX+4, y+13);
 
   doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(107,114,128);
-  doc.text("Ce calendrier est communiqué à titre indicatif et informatif, il peut donc être soumis à modification.", pageW/2, pageH-6, {align:'center'});
+  doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
   doc.save(`Planning_previsionnel_${slug}.pdf`);
