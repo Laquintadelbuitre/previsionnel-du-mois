@@ -883,7 +883,9 @@ function parseFrenchDateText(txt){
 
 function cellToIsoDate(rawValue){
   if(rawValue instanceof Date && !isNaN(rawValue)){
-    return rawValue.getFullYear() + '-' + String(rawValue.getMonth()+1).padStart(2,'0') + '-' + String(rawValue.getDate()).padStart(2,'0');
+    // SheetJS construit les dates Excel en UTC (minuit UTC) : on lit les
+    // composants en UTC pour éviter tout décalage lié au fuseau du navigateur.
+    return rawValue.getUTCFullYear() + '-' + String(rawValue.getUTCMonth()+1).padStart(2,'0') + '-' + String(rawValue.getUTCDate()).padStart(2,'0');
   }
   const txt = (rawValue || '').toString().trim();
   if(!txt) return '';
@@ -900,7 +902,7 @@ function cellToIsoDate(rawValue){
 
 function cellToTimeValue(rawValue){
   if(rawValue instanceof Date && !isNaN(rawValue)){
-    const hh = rawValue.getHours(), mm = rawValue.getMinutes();
+    const hh = rawValue.getUTCHours(), mm = rawValue.getUTCMinutes();
     if(hh === 0 && mm === 0) return '';
     return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
   }
