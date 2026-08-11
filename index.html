@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --navy:#132a4c;
@@ -156,7 +156,7 @@
   table.plan td.heure-cell, table.plan td.lieu-cell{text-align:center;}
   table.plan td.ou-cell{text-align:center; color:var(--muted); font-style:italic; font-size:10.5px;}
   table.plan td.color-cell{width:22px; padding:0; border-right:none; text-align:center;}
-  table.plan td.color-cell .sq{width:12px; height:12px; border-radius:3px; margin:0 auto; border:1px solid rgba(0,0,0,.15);}
+  table.plan td.color-cell .sq{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.15);}
   table.plan td.eq-cell{text-align:center;}
   table.plan td.info-row{font-style:italic; color:var(--navy-deep); background:#fbfbfb !important; text-align:center;}
 
@@ -272,7 +272,7 @@
           </div>
         </div>
         <div class="masthead-center">
-          <div class="title">Planning prévisionnel</div>
+          <div class="title">Calendrier prévisionnel</div>
           <div class="period" id="outPeriode">Période</div>
         </div>
         <div class="badge-wrap">
@@ -660,7 +660,7 @@ function exportPDF(){
   // Titre + période, centrés au milieu
   doc.setFontSize(13.5);
   doc.setFont('helvetica','bold');
-  doc.text('PLANNING PRÉVISIONNEL', zone2, 12.5, {align:'center'});
+  doc.text('CALENDRIER PRÉVISIONNEL', zone2, 12.5, {align:'center'});
   doc.setFontSize(10.5);
   doc.setFont('helvetica','normal');
   doc.text(p.texte, zone2, 19.5, {align:'center'});
@@ -786,7 +786,7 @@ function exportPDF(){
   doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
-  doc.save(`Planning_U13_${slug}.pdf`);
+  doc.save(`Calendrier_U13_${slug}.pdf`);
 }
 
 document.getElementById('exportBtn').addEventListener('click', exportPDF);
