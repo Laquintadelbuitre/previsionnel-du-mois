@@ -100,6 +100,7 @@
   .vs-label{ align-self:center; font-size:12px; color:var(--muted); font-style:italic; text-align:center; padding-bottom:8px; }
   .info-mode textarea{min-height:44px; resize:vertical;}
   .stage-mode{ display:grid; grid-template-columns:1fr 1fr 1.6fr; gap:10px; background:#f8f9fb; padding:8px; border-radius:6px; }
+  .tournoi-range-mode{ display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8f9fb; padding:8px; border-radius:6px; margin-bottom:10px; }
 
   .row-actions{ position:absolute; top:10px; right:12px; }
   #addRowBtn{margin-top:4px;}
@@ -365,6 +366,19 @@ function formatHeureFR(t){
   return mm === 0 ? `${hh}h` : `${hh}h${String(mm).padStart(2,'0')}`;
 }
 
+function formatDateRangeShort(debutIso, finIso){
+  if(!debutIso) return '';
+  if(!finIso || finIso === debutIso) return formatDateFR(debutIso);
+  const [ay, am, ad] = debutIso.split('-').map(Number);
+  const [by, bm, bd] = finIso.split('-').map(Number);
+  if(ay === by && am === bm){
+    return `${ad}–${bd} ${MOIS_FR[am-1]} ${ay}`;
+  } else if(ay === by){
+    return `${ad} ${MOIS_FR[am-1]} – ${bd} ${MOIS_FR[bm-1]} ${ay}`;
+  }
+  return `${formatDateFR(debutIso)} – ${formatDateFR(finIso)}`;
+}
+
 function hexToRgb(hex){
   const h = hex.replace('#','');
   return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
@@ -409,6 +423,13 @@ function addRow(prefill){
         <label>Date</label>
         <input type="date" class="f-date">
       </div>
+      <div class="field small tournoi-duree-wrap hidden">
+        <label>Durée du tournoi</label>
+        <select class="f-tournoi-duree" onchange="toggleTournoiDuree('${id}')">
+          <option value="single">1 jour</option>
+          <option value="range">Plusieurs jours</option>
+        </select>
+      </div>
       <div class="field mode">
         <label>Nature de la ligne</label>
         <select class="f-mode" onchange="toggleMode('${id}')">
@@ -417,6 +438,11 @@ function addRow(prefill){
           <option value="stage">Stage (dates début / fin)</option>
         </select>
       </div>
+    </div>
+
+    <div class="tournoi-range-mode hidden">
+      <div class="field"><label>Date début (tournoi)</label><input type="date" class="f-tournoi-debut"></div>
+      <div class="field"><label>Date fin (tournoi)</label><input type="date" class="f-tournoi-fin"></div>
     </div>
 
     <div class="match-mode">
@@ -464,17 +490,33 @@ function addRow(prefill){
     wrap.querySelector('.f-stage-debut').value = prefill.stageDebut || '';
     wrap.querySelector('.f-stage-fin').value = prefill.stageFin || '';
     wrap.querySelector('.f-stage-note').value = prefill.stageNote || '';
+    wrap.querySelector('.f-tournoi-duree').value = prefill.tournoiDuree || 'single';
+    wrap.querySelector('.f-tournoi-debut').value = prefill.tournoiDebut || '';
+    wrap.querySelector('.f-tournoi-fin').value = prefill.tournoiFin || '';
     toggleMode(id);
+    handleTypeChange(id);
   }
 }
 
 function handleTypeChange(id){
   const wrap = document.getElementById(id);
   const type = wrap.querySelector('.f-type').value;
+  wrap.querySelector('.tournoi-duree-wrap').classList.toggle('hidden', type !== 'tournoi');
   if(type === 'stage'){
     wrap.querySelector('.f-mode').value = 'stage';
     toggleMode(id);
   }
+  toggleTournoiDuree(id);
+}
+
+function toggleTournoiDuree(id){
+  const wrap = document.getElementById(id);
+  const type = wrap.querySelector('.f-type').value;
+  const mode = wrap.querySelector('.f-mode').value;
+  const duree = wrap.querySelector('.f-tournoi-duree').value;
+  const isRangeActive = (type === 'tournoi' && duree === 'range' && mode !== 'stage');
+  wrap.querySelector('.tournoi-range-mode').classList.toggle('hidden', !isRangeActive);
+  wrap.querySelector('.date-field-wrap').classList.toggle('hidden', mode === 'stage' || isRangeActive);
 }
 
 function toggleMode(id){
@@ -484,6 +526,7 @@ function toggleMode(id){
   wrap.querySelector('.info-mode').classList.toggle('hidden', mode !== 'info');
   wrap.querySelector('.stage-mode').classList.toggle('hidden', mode !== 'stage');
   wrap.querySelector('.date-field-wrap').classList.toggle('hidden', mode === 'stage');
+  toggleTournoiDuree(id);
 }
 
 document.getElementById('addRowBtn').addEventListener('click', () => addRow());
@@ -549,11 +592,20 @@ function getRowsData(){
     const type = card.querySelector('.f-type').value;
     const colorHex = TYPE_COLORS[type].hex;
     const mode = card.querySelector('.f-mode').value;
+    const isTournoiRange = (type === 'tournoi' && mode !== 'stage' && card.querySelector('.f-tournoi-duree').value === 'range');
+
+    let dateIso, dateDisplay;
+    if(isTournoiRange){
+      dateIso = card.querySelector('.f-tournoi-debut').value;
+      dateDisplay = formatDateRangeShort(dateIso, card.querySelector('.f-tournoi-fin').value);
+    } else {
+      dateIso = card.querySelector('.f-date').value;
+      dateDisplay = formatDateFR(dateIso);
+    }
 
     if(mode === 'info'){
-      const date = card.querySelector('.f-date').value;
       const info = card.querySelector('.f-info').value;
-      data.push({colorHex, isSpan:true, dateIso:date, date: formatDateFR(date), text: info});
+      data.push({colorHex, isSpan:true, dateIso, date: dateDisplay, text: info});
     } else if(mode === 'stage'){
       const debut = card.querySelector('.f-stage-debut').value;
       const fin = card.querySelector('.f-stage-fin').value;
@@ -564,9 +616,8 @@ function getRowsData(){
       if(note) txt += ` (${note})`;
       data.push({colorHex, isSpan:true, dateIso:debut, date:'', text: txt});
     } else {
-      const date = card.querySelector('.f-date').value;
       data.push({
-        colorHex, isSpan:false, dateIso:date, date: formatDateFR(date),
+        colorHex, isSpan:false, dateIso, date: dateDisplay,
         eq1: card.querySelector('.f-eq1').value,
         h1: formatHeureFR(card.querySelector('.f-h1').value),
         l1: card.querySelector('.f-l1').value,
@@ -785,7 +836,7 @@ function exportPDF(){
   doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
-  doc.save(`Calendrier_U13_${slug}.pdf`);
+  doc.save(`Planning_previsionnel_${slug}.pdf`);
 }
 
 document.getElementById('exportBtn').addEventListener('click', exportPDF);
@@ -966,10 +1017,6 @@ async function handleImportMerge(){
 document.getElementById('importMergeBtn').addEventListener('click', handleImportMerge);
 
 // ---------- Pré-remplissage d'exemple ----------
-addRow({type:'champ', date:'2026-09-12', mode:'match', eq1:'Aixe 1 / Aurence 1', h1:'10:00', l1:'St Lazare'});
-addRow({type:'autre', date:'2026-09-15', mode:'match', eq1:'Match amical U13-2', h1:'18:00', l1:'Beaublanc'});
-addRow({type:'champ', date:'2026-09-19', mode:'match', eq1:'Verneuil 1', h1:'10:30', l1:'St Lazare', eq2:'St Junien 2', h2:'14:00', l2:'St Junien'});
-addRow({type:'stage', mode:'stage', stageDebut:'2026-09-19', stageFin:'2026-09-24', stageNote:'samedi inclus'});
 generate();
 </script>
 </body>
