@@ -322,7 +322,7 @@
           </div>
         </div>
 
-        <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
+        <div class="footnote">Ce calendrier est à titre indicatif et donc, soumis à des modifications.</div>
       </div>
     </div>
   </div>
@@ -833,7 +833,7 @@ function exportPDF(){
   doc.text(wrapped, notesX+4, y+13);
 
   doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(107,114,128);
-  doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
+  doc.text("Ce calendrier est à titre indicatif et donc, soumis à des modifications.", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
   doc.save(`Planning_previsionnel_${slug}.pdf`);
