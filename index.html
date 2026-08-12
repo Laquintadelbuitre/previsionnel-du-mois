@@ -340,7 +340,7 @@
           </div>
         </div>
 
-        <div class="footnote">Merci d'informer systématiquement de l'absence de votre enfant.</div>
+        <div class="footnote">Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...). Les dates et horaires sont donc susceptibles d'être ajustés</div>
       </div>
     </div>
   </div>
@@ -791,7 +791,16 @@ document.getElementById('generateBtn').addEventListener('click', generate);
 function exportPDF(){
   generate();
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+
+  // Hauteur de page adaptée au nombre de lignes, pour éviter le grand vide
+  // en bas de page quand le planning est court.
+  const rowsCount = filterAndSort(getRowsData()).length;
+  const bandH = 27;
+  const estTableH = 8 + rowsCount * 6.3;
+  const estContentH = bandH + 7 + estTableH + 8 + 36 + 14;
+  const pageHeight = Math.max(110, Math.min(estContentH, 210));
+
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:[297, pageHeight]});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 12;
@@ -799,7 +808,6 @@ function exportPDF(){
   const gold = [201,162,39];
   const p = computePeriode();
 
-  const bandH = 27;
   doc.setFillColor(...navy);
   doc.rect(0,0,pageW,bandH,'F');
   doc.setFillColor(...gold);
@@ -914,9 +922,10 @@ function exportPDF(){
   });
 
   let y = doc.lastAutoTable.finalY + 7;
-  if(y > pageH - 50) y = pageH - 50;
+  const boxH = 36;
+  if(y + boxH + 14 > pageH) y = pageH - boxH - 14;
 
-  const legendW = 85, boxH = 36;
+  const legendW = 85;
   doc.setDrawColor(221,225,231);
   doc.setLineWidth(0.2);
   doc.roundedRect(marginX, y, legendW, boxH, 2, 2, 'S');
@@ -947,7 +956,7 @@ function exportPDF(){
   drawFormattedNotes(doc, notesRuns, notesX+4, y+13.5, notesW-8, 4.6, 9.5);
 
   doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(107,114,128);
-  doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
+  doc.text("Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...). Les dates et horaires sont donc susceptibles d'être ajustés", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
   doc.save(`Planning_previsionnel_${slug}.pdf`);
