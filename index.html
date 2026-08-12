@@ -340,7 +340,7 @@
           </div>
         </div>
 
-        <div class="footnote">Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...). Les dates et horaires sont donc susceptibles d'être ajustés</div>
+        <div class="footnote">Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...).</div>
       </div>
     </div>
   </div>
@@ -956,7 +956,7 @@ function exportPDF(){
   drawFormattedNotes(doc, notesRuns, notesX+4, y+13.5, notesW-8, 4.6, 9.5);
 
   doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(107,114,128);
-  doc.text("Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...). Les dates et horaires sont donc susceptibles d'être ajustés", pageW/2, pageH-6, {align:'center'});
+  doc.text("Ce planning est communiqué à titre indicatif et pourra faire l'objet de modifications (météo, disponibilité du terrain, contraintes de calendrier...).", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
   doc.save(`Planning_previsionnel_${slug}.pdf`);
