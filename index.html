@@ -804,7 +804,7 @@ function exportPDF(){
   // Pré-mesure (document temporaire, jamais affiché) du texte des
   // "Informations du mois" pour connaître la hauteur réellement nécessaire
   // à cette case, quelle que soit la longueur du texte saisi.
-  const measureDoc = new jsPDF({unit:'mm', format:'a4'});
+  const measureDoc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const measuredEndY = layoutFormattedNotes(measureDoc, notesRuns, notesX+4, 0, notesW-8, notesLineH, notesFontSize, true);
   const notesTextH = measuredEndY + notesLineH*0.4;
   const boxH = Math.max(36, 14 + notesTextH + 6);
@@ -816,9 +816,9 @@ function exportPDF(){
   const bandH = 27;
   const estTableH = 8 + rowsCount * 6.3;
   const estContentH = bandH + 7 + estTableH + 8 + boxH + 14;
-  const pageHeight = Math.max(110, Math.min(estContentH, 400));
+  const pageHeight = Math.max(110, Math.min(estContentH, 297));
 
-  const doc = new jsPDF({unit:'mm', format:[297, pageHeight]});
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:[297, pageHeight]});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const navy = [19,42,76];
