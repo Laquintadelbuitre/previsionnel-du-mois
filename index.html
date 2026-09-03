@@ -89,6 +89,20 @@
   .import-status.err{color:var(--red);}
   .import-help{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5;}
 
+  .recent-export-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px;
+  }
+  .recent-export-item .meta{ font-size:12.5px; }
+  .recent-export-item .meta .label{ font-weight:600; color:var(--navy-deep); }
+  .recent-export-item .meta .date{ color:var(--muted); font-size:11px; }
+  .recent-export-item .actions{ display:flex; gap:8px; flex-shrink:0; }
+  .recent-export-item .actions button, .recent-export-item .actions a{
+    font-family:var(--font-body); font-size:12px; font-weight:600; border-radius:6px;
+    padding:6px 10px; cursor:pointer; text-decoration:none; border:1px solid var(--navy); color:var(--navy); background:#fff;
+  }
+  .recent-export-item .actions button:hover, .recent-export-item .actions a:hover{ background:#e8edf5; }
+
   .row-card{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; position:relative; }
   .row-card .row-top{ display:flex; gap:10px; align-items:flex-end; margin-bottom:10px; flex-wrap:wrap; }
   .row-top .field{flex:1; min-width:150px;}
@@ -273,6 +287,12 @@
     <button class="btn-secondary" id="exportBtn">Exporter en PDF</button>
   </div>
 
+  <div class="panel" id="recentExportsPanel" style="display:none;">
+    <h2>Derniers PDF générés (sur cet appareil)</h2>
+    <p class="subnote">Stockés localement dans ce navigateur — pratique pour retrouver un export sans tout ressaisir. Utilisez « Partager » pour l'envoyer sur un autre appareil.</p>
+    <div id="recentExportsList"></div>
+  </div>
+
   <!-- ===== PREVIEW ===== -->
   <div class="sheet-wrap">
     <div id="sheet">
@@ -416,10 +436,19 @@ function colorToRgb(c){
 // zone "Informations du mois" en une liste de segments de texte stylés,
 // exploitable pour un rendu manuel dans le PDF (jsPDF ne rend pas le HTML).
 function parseNotesRuns(root){
+  root.normalize();
   const runs = [];
+  function cleanText(t){
+    // Firefox insère parfois des caractères invisibles dans le contenteditable
+    // (espace insécable, caractères "zéro largeur" utilisés pour positionner le
+    // curseur) qui cassent le fractionnement en mots ou créent des segments
+    // orphelins entre deux morceaux du même mot.
+    return t.replace(/[\u200B\u200C\u200D\uFEFF]/g, '').replace(/\u00A0/g, ' ');
+  }
   function walk(node, style){
     if(node.nodeType === Node.TEXT_NODE){
-      if(node.textContent) runs.push({text: node.textContent, ...style});
+      const t = cleanText(node.textContent || '');
+      if(t) runs.push({text: t, ...style});
       return;
     }
     if(node.nodeType !== Node.ELEMENT_NODE) return;
@@ -435,7 +464,25 @@ function parseNotesRuns(root){
     if((tag === 'div' || tag === 'p') && node !== root){ runs.push({text:'\n', ...style}); }
   }
   root.childNodes.forEach(n => walk(n, {bold:false, italic:false, underline:false, color:null}));
-  return runs;
+  // Fusionne les segments consécutifs de même style : les navigateurs (Firefox
+  // en tête, mais aussi les claviers mobiles avec correction automatique)
+  // fragmentent parfois un même mot en plusieurs nœuds texte distincts, avec
+  // des attributs de couleur écrits différemment bien que visuellement
+  // identiques (d'où la comparaison via colorToRgb plutôt qu'une égalité de
+  // chaîne brute). Sans fusion, chaque fragment est traité comme un "mot" à
+  // part lors du retour à la ligne, ce qui insère des espaces parasites au
+  // milieu des mots.
+  const styleKey = r => `${r.bold}|${r.italic}|${r.underline}|${colorToRgb(r.color).join(',')}`;
+  const merged = [];
+  runs.forEach(r => {
+    const last = merged[merged.length - 1];
+    if(r.text !== '\n' && last && last.text !== '\n' && styleKey(last) === styleKey(r)){
+      last.text += r.text;
+    } else {
+      merged.push({...r});
+    }
+  });
+  return merged;
 }
 
 // Dessine les segments stylés dans le PDF avec retour à la ligne automatique.
@@ -971,10 +1018,98 @@ function exportPDF(){
   doc.text("Merci d'informer systématiquement de l'absence de votre enfant.", pageW/2, pageH-6, {align:'center'});
 
   const slug = p.texte.replace(/[^a-zA-Z0-9]+/g,'_');
-  doc.save(`Planning_previsionnel_${slug}.pdf`);
+  const filename = `Planning_previsionnel_${slug}.pdf`;
+  doc.save(filename);
+
+  try{
+    const dataUri = doc.output('datauristring');
+    saveRecentExport(filename, dataUri, p.texte);
+  } catch(e){ /* stockage local optionnel, ne bloque pas l'export */ }
 }
 
 document.getElementById('exportBtn').addEventListener('click', exportPDF);
+
+// ---------- Historique local des derniers PDF générés (par navigateur/appareil) ----------
+const RECENT_EXPORTS_KEY = 'planningU13_recentExports';
+const RECENT_EXPORTS_MAX = 5;
+
+function loadRecentExports(){
+  try{
+    return JSON.parse(localStorage.getItem(RECENT_EXPORTS_KEY) || '[]');
+  } catch(e){ return []; }
+}
+
+function saveRecentExport(filename, dataUri, periodeLabel){
+  let list = loadRecentExports();
+  list.unshift({ filename, dataUri, periodeLabel, generatedAt: new Date().toISOString() });
+  // En cas de dépassement du quota du navigateur, on retire les plus anciens et on réessaie.
+  while(list.length > 0){
+    list = list.slice(0, RECENT_EXPORTS_MAX);
+    try{
+      localStorage.setItem(RECENT_EXPORTS_KEY, JSON.stringify(list));
+      break;
+    } catch(e){
+      list.pop();
+    }
+  }
+  renderRecentExports();
+}
+
+function formatGeneratedAt(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `généré le ${dd}/${mm}/${d.getFullYear()} à ${hh}:${mi}`;
+}
+
+async function shareRecentExport(item){
+  try{
+    const res = await fetch(item.dataUri);
+    const blob = await res.blob();
+    const file = new File([blob], item.filename, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title: item.filename});
+      return;
+    }
+  } catch(e){ /* on retombe sur le téléchargement classique */ }
+  const a = document.createElement('a');
+  a.href = item.dataUri; a.download = item.filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function renderRecentExports(){
+  const list = loadRecentExports();
+  const panel = document.getElementById('recentExportsPanel');
+  const container = document.getElementById('recentExportsList');
+  if(list.length === 0){ panel.style.display = 'none'; container.innerHTML = ''; return; }
+  panel.style.display = '';
+  container.innerHTML = '';
+  const canShareFiles = !!(navigator.share);
+  list.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'recent-export-item';
+    row.innerHTML = `
+      <div class="meta">
+        <div class="label">${esc(item.periodeLabel || item.filename)}</div>
+        <div class="date">${esc(formatGeneratedAt(item.generatedAt))}</div>
+      </div>
+      <div class="actions">
+        <a href="${item.dataUri}" target="_blank" rel="noopener">Ouvrir</a>
+        <a href="${item.dataUri}" download="${item.filename}">Télécharger</a>
+        ${canShareFiles ? `<button type="button" class="share-btn" data-idx="${i}">Partager</button>` : ''}
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  container.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', () => shareRecentExport(list[Number(btn.dataset.idx)]));
+  });
+}
+
+renderRecentExports();
 
 // ---------- IMPORT EXCEL ----------
 function findHeaderRowIndex(rows){
