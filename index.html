@@ -439,11 +439,20 @@ function parseNotesRuns(root){
   root.normalize();
   const runs = [];
   function cleanText(t){
-    // Firefox insère parfois des caractères invisibles dans le contenteditable
-    // (espace insécable, caractères "zéro largeur" utilisés pour positionner le
-    // curseur) qui cassent le fractionnement en mots ou créent des segments
-    // orphelins entre deux morceaux du même mot.
-    return t.replace(/[\u200B\u200C\u200D\uFEFF]/g, '').replace(/\u00A0/g, ' ');
+    // Sur macOS (Safari et Firefox en héritent), les lettres accentuées tapées
+    // au clavier peuvent être enregistrées en Unicode "décomposé" (ex : "é"
+    // stocké comme "e" + accent aigu séparé, au lieu du caractère unique "é").
+    // La police standard utilisée dans le PDF ne sait afficher que la forme
+    // "composée" : sans recomposition, l'accent disparaît et l'espacement de
+    // tout le mot se dérègle (ex : "Séances" devient "S e a n c e s"). La
+    // méthode normalize('NFC') recolle systématiquement lettre + accent en un
+    // seul caractère avant tout autre traitement.
+    let out = t.normalize('NFC');
+    // Firefox insère aussi parfois des caractères invisibles dans le
+    // contenteditable (espace insécable, caractères "zéro largeur" utilisés
+    // pour positionner le curseur) qui cassent le fractionnement en mots ou
+    // créent des segments orphelins entre deux morceaux du même mot.
+    return out.replace(/[\u200B\u200C\u200D\uFEFF]/g, '').replace(/\u00A0/g, ' ');
   }
   function walk(node, style){
     if(node.nodeType === Node.TEXT_NODE){
